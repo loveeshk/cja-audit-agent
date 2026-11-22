@@ -652,13 +652,19 @@
 
     async function initAudit() {
       try {
-        const [status, list] = await Promise.all([api('/api/audit/status'), api('/api/audit/dataviews')]);
+        const [status, list, sys] = await Promise.all([
+          api('/api/audit/status'), api('/api/audit/dataviews'),
+          fetch('/api/system-status').then((r) => r.json()).catch(() => null),
+        ]);
         auditState.sample = status.sample;
+        const publicDemo = Boolean(sys && sys.login && sys.login.publicDemo);
         const banner = $('sourceBanner');
         banner.className = `banner ${status.sample ? 'sample' : 'live'}`;
-        banner.textContent = status.sample
-          ? 'Sample data: no Adobe credentials are configured, so this audit runs on built-in sample data with deliberate problems. Add the Server-to-Server credentials in .env to audit your own environment.'
-          : 'Connected to Customer Journey Analytics (read-only).';
+        banner.textContent = !status.sample
+          ? 'Connected to Customer Journey Analytics (read-only).'
+          : publicDemo
+            ? 'Public demo: this audit runs on built-in sample data with deliberate problems, so there is something to find. Nothing here connects to Adobe. To audit your own environment, run the tool locally with your Adobe credentials (see the README).'
+            : 'Sample data: no Adobe credentials are configured, so this audit runs on built-in sample data with deliberate problems. Add the Server-to-Server credentials in .env to audit your own environment.';
         $('fillExampleBtn').style.display = status.sample ? 'inline-block' : 'none';
         const views = list.dataViews || [];
         $('dataViewSelect').innerHTML = views.length
