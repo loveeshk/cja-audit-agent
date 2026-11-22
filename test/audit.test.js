@@ -345,4 +345,11 @@ test('routes: explain without an API key returns a ready-to-paste prompt, not an
   assert.ok(r.body.manualPrompt.includes('conn.import-new-data-off'));
   assert.ok(r.body.manualPrompt.includes('--- EXCERPTS ---'));
   assert.ok(r.body.sources.length > 0);
+  // Without a model the reply quotes the notes per finding: every high and medium finding is listed, no others.
+  assert.strictEqual(r.body.answerKind, 'excerpts');
+  for (const f of audit.findings) {
+    const listed = r.body.markdown.includes(`(${f.id})`);
+    assert.strictEqual(listed, ['high', 'medium'].includes(f.severity), `${f.id} (${f.severity})`);
+  }
+  assert.match(r.body.markdown, /From the notes \[\d+\]/);
 });

@@ -71,7 +71,8 @@ The first start downloads a small local embedding model (about 25 MB from huggin
 index. If that fails, the app still starts and answers from the full notes, with a notice.
 
 To turn on explanations and Q&A, copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. Without a key those two
-features return the exact prompt with a **Copy prompt** button so you can paste it into a chat with Claude.
+features still work: Ask the docs quotes the best-matching note sections word for word, Explain findings quotes the
+note retrieved for each high and medium finding, both with their sources, and both features offer the exact prompt with a **Copy prompt** button so you can paste it into a chat with Claude.
 
 ## Hosted demo
 
@@ -82,7 +83,7 @@ features return the exact prompt with a **Copy prompt** button so you can paste 
 A public, read-only demo can be deployed to [Render](https://render.com) from `render.yaml` (the button above, or
 New > Blueprint and pick this repository). It sets `PUBLIC_DEMO=true`, which at startup **removes every Adobe credential and the Anthropic
 key, forces the labelled sample data and keeps feed creation off**, and only then lets the server listen publicly
-(see `demo-mode.js`, tested in `test/demo-mode.test.js`). Explain and Ask work in copy-prompt mode. On the free plan the
+(see `demo-mode.js`, tested in `test/demo-mode.test.js`). Ask the docs and Explain findings reply with quoted note sections and their sources, plus a copy-ready prompt for a written answer. On the free plan the
 service sleeps when idle, so the first visit can take about a minute.
 
 ## The web interface

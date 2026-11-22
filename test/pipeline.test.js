@@ -97,8 +97,14 @@ test('no API key: the full prompt with the retrieved excerpts is returned for ma
   assert.ok(r.manualPrompt.includes('--- RETRIEVED EXCERPTS ---'));
   assert.ok(r.manualPrompt.includes('--- USER MESSAGE ---'));
   assert.ok(r.manualPrompt.includes('what does the hasData field'));
-  assert.ok(r.answer.includes('No ANTHROPIC_API_KEY'));
   assert.ok(r.sources.length >= 1);
+  // The reply quotes the top retrieved sections word for word: nothing is generated without a model.
+  assert.strictEqual(r.answerKind, 'excerpts');
+  const top = r.retrieval.hits[0];
+  const topText = top.body.split('\n').filter((l) => !l.startsWith('Source:')).join('\n').trim();
+  assert.ok(r.answer.includes(topText), 'the top section must be quoted verbatim');
+  assert.ok(r.answer.includes(`[${top.n}]`), 'each quoted section carries its source number');
+  for (const h of r.retrieval.hits) assert.ok(r.answer.includes(`[${h.n}]`), 'every returned section is quoted, not only the first');
 });
 
 test('no API key and nothing relevant: still told the notes do not cover it, no prompt offered', async () => {

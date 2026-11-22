@@ -58,7 +58,7 @@ Constraints: the audit never writes; the single action that changes Adobe (creat
 
 1. **Audit.** The CJA client (GET requests only) loads the data view, its components and its connection, or uses built-in sample data. Deterministic checks produce findings. Fields Adobe did not return cause the related check to be skipped and listed.
 2. **Planned feed check.** The same data feeds a validator driven by `feed-rules.json`, which holds Adobe's published rules as data.
-3. **Explain or ask.** Retrieval finds the relevant sections of `knowledge.md`. The answer layer gives the model only the findings and numbered excerpts, and the model cites them. If nothing passes the threshold, the model is not called. With no API key, the exact prompt is returned for manual use.
+3. **Explain or ask.** Retrieval finds the relevant sections of `knowledge.md`. The answer layer gives the model only the findings and numbered excerpts, and the model cites them. If nothing passes the threshold, the model is not called. With no API key, nothing is generated: Ask the docs quotes the best-matching note sections word for word, and Explain findings quotes the note retrieved for each high and medium finding, both with their sources. Both flows also return the exact prompt for manual use.
 
 **Retrieval.** `knowledge.md` is split at its headings into 53 chunks (average 63 words). Each chunk and each question is embedded locally with `all-MiniLM-L6-v2`. Ranking combines cosine similarity, a BM25 keyword score and a small boost for exact identifiers. The "not covered" gate uses semantic similarity only, so generic keyword overlap cannot make an unrelated question look covered.
 
@@ -180,7 +180,7 @@ The system passes the top 4 chunks to the model, so hit@4 is the number that mat
 | Condition | Behaviour |
 |---|---|
 | Embedding index unavailable | Answer from the full notes and say so |
-| No API key | Return the exact prompt for manual use |
+| No API key | Ask the docs and Explain findings quote the retrieved note sections verbatim with sources (per finding for Explain); both also return the exact prompt for manual use |
 | Adobe does not return a field | Skip that check and list it |
 | Nothing relevant retrieved | Say the notes do not cover it, with no model call |
 | Connection not readable | Run the data view checks and report the connection as unreadable |

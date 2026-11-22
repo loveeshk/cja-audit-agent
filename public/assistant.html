@@ -542,7 +542,11 @@
         const answerEl = document.getElementById(turnId);
         answerEl.classList.remove('loading-card');
         answerEl.innerHTML = formatAnswer(data.answer);
-        if (data.manualPrompt) answerEl.insertAdjacentHTML('beforeend', manualPromptHtml(data.manualPrompt));
+        if (data.manualPrompt) {
+          answerEl.insertAdjacentHTML('beforeend', data.answerKind === 'excerpts'
+            ? `<details class="sources"><summary>Want a written answer? Copy this prompt into a chat with Claude</summary>${manualPromptHtml(data.manualPrompt)}</details>`
+            : manualPromptHtml(data.manualPrompt));
+        }
         answerEl.insertAdjacentHTML('beforeend', renderSources(data.sources, data.fallbackReason));
         answerEl.insertAdjacentHTML('beforeend', renderInspector(data.trace));
         turnEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -801,7 +805,11 @@
         const data = await post('/api/audit/explain', { findings, question: $('explainQuestion').value });
         auditState.explanation = data;
         box.classList.remove('loading-card');
-        box.innerHTML = formatAnswer(data.markdown) + (data.manualPrompt ? manualPromptHtml(data.manualPrompt) : '') + renderSources(data.sources);
+        const promptHtml = !data.manualPrompt ? ''
+          : data.answerKind === 'excerpts'
+            ? `<details class="sources"><summary>Want a written explanation? Copy this prompt into a chat with Claude</summary>${manualPromptHtml(data.manualPrompt)}</details>`
+            : manualPromptHtml(data.manualPrompt);
+        box.innerHTML = formatAnswer(data.markdown) + promptHtml + renderSources(data.sources);
       } catch (err) {
         box.style.display = 'none';
         setStatus($('explainStatus'), 'error', err.message);

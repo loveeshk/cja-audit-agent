@@ -6,7 +6,7 @@
 'use strict';
 
 const rag = require('../rag');
-const { INTRO, FORMATTING, publicSource, logTrace, excerptBlock, NO_KEY_MESSAGE, manualPromptText } = require('../core');
+const { INTRO, FORMATTING, publicSource, logTrace, excerptBlock, manualPromptText, excerptAnswer } = require('../core');
 
 const MAX_FINDINGS = 12;
 const MAX_EXCERPTS = 8;
@@ -25,6 +25,35 @@ function cleanFindings(findings) {
       evidence: f.evidence ? JSON.stringify(f.evidence).slice(0, 600) : null,
       kbQuery: String(f.kbQuery || `${f.id} ${f.title}`).slice(0, 300),
     }));
+}
+
+// No API key: for each finding, quote the note section retrieved for it, word for word, with its source.
+// Nothing is generated, so the reply cannot add findings or invent behaviour.
+function quoteSection(h) {
+  const lines = String(h.body).split('\n');
+  const src = lines.filter((l) => /^Source:\s*\S+/.test(l)).map((l) => l.replace(/^Source:\s*/, '').trim())[0];
+  const text = lines.filter((l) => !/^Source:\s*/.test(l)).join('\n').trim();
+  return `From the notes [${h.n}] ${String(h.section).split(' > ').pop()}: ${text}\n${src ? `Source: ${src}` : '(Audit tool note, not Adobe documentation.)'}`;
+}
+
+function excerptExplanation(findings, perFinding, hits, question) {
+  const byId = new Map(hits.map((h) => [h.id, h]));
+  const order = { high: 0, medium: 1 };
+  const parts = [...findings].sort((a, b) => order[a.severity] - order[b.severity]).map((f) => {
+    const pf = perFinding.find((p) => p.id === f.id);
+    const hit = pf && pf.chunks.map((c) => byId.get(c.id)).find(Boolean);
+    const sev = f.severity === 'high' ? 'High' : 'Medium';
+    return `**${sev}: ${f.title}** (${f.id})\n${hit ? quoteSection(hit) : 'No documentation excerpt found for this finding. Rely on the finding\'s own evidence above.'}`;
+  });
+  let out = `Here is what the CJA reference notes say about each high and medium finding, highest severity first. Each note is quoted from the section retrieved for that finding:\n\n${parts.join('\n\n')}`;
+  if (question) {
+    const pq = perFinding.find((p) => p.id === 'question');
+    const qHits = pq ? pq.chunks.map((c) => byId.get(c.id)).filter(Boolean) : [];
+    out += `\n\n**Your question:** ${question}\n` + (qHits.length
+      ? excerptAnswer(qHits).replace(/^Here is what the CJA reference notes say about this\.[^\n]*\n\n/, '')
+      : 'The reference notes do not cover this question.');
+  }
+  return out;
 }
 
 function buildPrompt(findings, hits, question) {
@@ -88,7 +117,8 @@ async function explain({ client, model, maxTokens, findings, question }) {
   // No API key: return the exact prompt for pasting into a chat with Claude by hand.
   if (!client) {
     return {
-      markdown: NO_KEY_MESSAGE,
+      markdown: excerptExplanation(cleaned, perFinding, hits, q),
+      answerKind: 'excerpts',
       manualPrompt: manualPromptText(system, userMessage),
       sources: hits.map(publicSource),
       modelCalled: false,
@@ -117,4 +147,4 @@ async function explain({ client, model, maxTokens, findings, question }) {
   return { markdown, sources, modelCalled: true, usage: response.usage || null, perFinding };
 }
 
-module.exports = { explain, cleanFindings, buildPrompt };
+module.exports = { explain, cleanFindings, buildPrompt, excerptExplanation };

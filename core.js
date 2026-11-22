@@ -16,7 +16,22 @@ const NOT_COVERED =
   'Try rephrasing it, or check the Adobe documentation directly.';
 
 const NO_KEY_MESSAGE =
-  'No ANTHROPIC_API_KEY is set, so the answer was not written automatically. The prompt below is exactly what would have been sent, including the notes retrieved for this question. Copy it into a chat with Claude (claude.ai) to get the answer.';
+  'No AI model is connected here, so this answer was not written automatically. The prompt below is exactly what would have been sent, including the notes retrieved for it. Copy it into a chat with Claude (claude.ai) to get the written answer.';
+
+// With no API key, Ask the docs still replies like a chat: it quotes the retrieved note sections, word for word,
+// with their headings and Adobe source links, so the reply is grounded and costs nothing. Nothing is generated.
+// It quotes every section that passed the threshold (at most k = 4, the same set the model would get), because the
+// answering section is not always first: for "Which columns cannot be included?" it ranked 4th in the evaluation.
+function excerptAnswer(hits, max = hits.length) {
+  const parts = hits.slice(0, max).map((h) => {
+    const lines = String(h.body).split('\n');
+    const src = lines.filter((l) => /^Source:\s*\S+/.test(l)).map((l) => l.replace(/^Source:\s*/, '').trim())[0];
+    const text = lines.filter((l) => !/^Source:\s*/.test(l)).join('\n').trim();
+    const title = String(h.section).split(' > ').pop();
+    return `**[${h.n}] ${title}**\n${text}${src ? `\nSource: ${src}` : '\n(Audit tool note, not Adobe documentation.)'}`;
+  });
+  return `Here is what the CJA reference notes say about this. These are the ${parts.length} closest matching sections, quoted word for word; the one that answers your question may not be first:\n\n${parts.join('\n\n')}`;
+}
 
 function manualPromptText(system, userMessage) {
   return `${system}\n\n--- USER MESSAGE ---\n${userMessage}`;
@@ -133,7 +148,8 @@ async function answerMessages({ client, model, maxTokens, messages, mode = 'rag'
   // No API key: hand back the exact prompt so it can be pasted into a chat with Claude by hand.
   if (!client) {
     return {
-      answer: NO_KEY_MESSAGE,
+      answer: retrieval && retrieval.hits.length ? excerptAnswer(retrieval.hits) : NO_KEY_MESSAGE,
+      answerKind: retrieval && retrieval.hits.length ? 'excerpts' : 'prompt-only',
       manualPrompt: manualPromptText(system, query),
       sources: retrieval ? retrieval.hits.map(publicSource) : [],
       mode: effectiveMode,
@@ -179,4 +195,4 @@ function excerptBlock(hits) {
   return hits.map((h) => `[${h.n}] Section: ${h.section} (notes lines ${h.lines})\n${h.body}`).join('\n\n');
 }
 
-module.exports = { NO_KEY_MESSAGE, manualPromptText, answerMessages, buildSystemPrompt, NOT_COVERED, INTRO, FORMATTING, publicSource, logTrace, excerptBlock };
+module.exports = { NO_KEY_MESSAGE, excerptAnswer, manualPromptText, answerMessages, buildSystemPrompt, NOT_COVERED, INTRO, FORMATTING, publicSource, logTrace, excerptBlock };
