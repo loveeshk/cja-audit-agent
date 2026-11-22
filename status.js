@@ -7,7 +7,7 @@ function buildStatus({ disableAuth, auditSource, hasAnthropicKey, model, ragStat
   const live = auditSource === 'live';
   return {
     login: env.PUBLIC_DEMO === 'true'
-      ? { enabled: false, label: 'Public demo', detail: 'Hosted demo: sample data only. Adobe access, feed creation and the Claude API are switched off on the server.' }
+      ? { enabled: false, publicDemo: true, label: 'Public demo', detail: 'Hosted demo: sample data only. Adobe access, feed creation and the Claude API are switched off on the server.' }
       : disableAuth
       ? { enabled: false, label: 'Login off', detail: 'Local mode: everyone is "Test User" and the server only accepts connections from this computer.' }
       : { enabled: true, label: 'Login on', detail: 'Signed in with Adobe single sign-on.' },

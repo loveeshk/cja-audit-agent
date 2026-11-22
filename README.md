@@ -7,6 +7,8 @@ It combines deterministic checks (so findings are exact and repeatable), retriev
 explanations are cited), and a language model that may only explain what the checks found. It is advisory: a person
 decides and acts.
 
+**Try it:** [live demo](https://cja-audit-agent.onrender.com) (sample data, read-only) · [final report](docs/final-capstone-report.md) · [quick start](#quick-start-for-reviewers-no-accounts-or-keys-needed)
+
 ![Architecture](docs/architecture.png)
 
 ## The problem
@@ -72,6 +74,8 @@ To turn on explanations and Q&A, copy `.env.example` to `.env` and set `ANTHROPI
 features return the exact prompt with a **Copy prompt** button so you can paste it into a chat with Claude.
 
 ## Hosted demo
+
+**Live demo: https://cja-audit-agent.onrender.com** (sample data only; the first visit after a quiet period takes about a minute while the free service wakes up)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/loveeshk/cja-audit-agent)
 

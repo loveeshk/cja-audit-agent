@@ -45,6 +45,7 @@ test('a server started in demo mode with credentials planted serves sample data 
   }
   assert.ok(status, `server did not start:\n${log}`);
   assert.strictEqual(status.login.label, 'Public demo');
+  assert.strictEqual(status.login.publicDemo, true, 'the page header must not claim local mode on a public site');
   assert.strictEqual(status.data.source, 'sample');
   assert.strictEqual(status.answers.mode, 'copy-prompt');
   assert.strictEqual(status.safety.feedCreation.enabled, false);

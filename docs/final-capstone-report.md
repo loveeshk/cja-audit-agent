@@ -213,6 +213,8 @@ The system passes the top 4 chunks to the model, so hit@4 is the number that mat
 
 **Repository:** [https://github.com/loveeshk/cja-audit-agent](https://github.com/loveeshk/cja-audit-agent)
 
+**Live demo:** [https://cja-audit-agent.onrender.com](https://cja-audit-agent.onrender.com). This is a public, read-only deployment on Render in demo mode: sample data only, with Adobe access, feed creation and the Claude API switched off on the server. On the free plan it sleeps when idle, so the first visit can take about a minute.
+
 **What it contains**
 
 | Required element | Where |

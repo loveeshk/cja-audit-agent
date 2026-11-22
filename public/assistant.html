@@ -446,7 +446,9 @@
       try { status = await (await fetch('/api/system-status')).json(); } catch (_) { /* the strip simply stays empty */ }
       if (status) renderStatus(status);
       if (status && !status.login.enabled) {
-        info.innerHTML = 'Local mode <span class="muted">· login is off, this computer only</span>';
+        info.innerHTML = status.login.publicDemo
+          ? 'Public demo <span class="muted">· read-only, built-in sample data, nothing connects to Adobe</span>'
+          : 'Local mode <span class="muted">· login is off, this computer only</span>';
         document.getElementById('logoutLink').style.display = 'none';
         return;
       }
