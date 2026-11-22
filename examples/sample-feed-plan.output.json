@@ -1,0 +1,296 @@
+{
+  "source": "mock",
+  "sample": true,
+  "ranAt": "2026-11-22T12:00:00.000Z",
+  "target": {
+    "dataView": {
+      "id": "dv_sample0001",
+      "name": "SAMPLE - Web + Call Center DV"
+    },
+    "connection": {
+      "id": "dg_sample-0001",
+      "name": "SAMPLE - Web + Call Center"
+    }
+  },
+  "counts": {
+    "high": 5,
+    "medium": 2,
+    "low": 0,
+    "info": 3,
+    "total": 10
+  },
+  "findings": [
+    {
+      "id": "feed.column-conflict",
+      "severity": "high",
+      "area": "feed",
+      "title": "User Agent / Mobile ID cannot be combined with these device columns",
+      "detail": "These dimensions cannot exist together in Experience Platform datasets, so they cannot share a feed.",
+      "evidence": {
+        "includes": [
+          "user agent"
+        ],
+        "conflictsWith": [
+          "browser"
+        ]
+      },
+      "fix": "Remove either the User Agent / Mobile ID column or the conflicting device columns.",
+      "kbQuery": "feed.column-conflict User Agent / Mobile ID cannot be combined with these device columns"
+    },
+    {
+      "id": "feed.column-not-available",
+      "severity": "high",
+      "area": "feed",
+      "title": "1 column(s) cannot be included in a data feed",
+      "detail": "Adobe lists these components as not available in data feeds. Timestamp UTC is always included, so time breakdowns can usually be rebuilt downstream.",
+      "evidence": [
+        "Day"
+      ],
+      "fix": "Remove them from the plan.",
+      "kbQuery": "feed.column-not-available 1 column(s) cannot be included in a data feed"
+    },
+    {
+      "id": "feed.column-substitute",
+      "severity": "high",
+      "area": "feed",
+      "title": "1 metric(s) must be substituted",
+      "detail": "These metrics are exported through a count distinct of an ID column.",
+      "evidence": [
+        {
+          "column": "Events",
+          "use": "count distinct of Row ID"
+        }
+      ],
+      "fix": null,
+      "kbQuery": "feed.column-substitute 1 metric(s) must be substituted"
+    },
+    {
+      "id": "feed.column-unresolved",
+      "severity": "high",
+      "area": "feed",
+      "title": "1 column(s) not found in the data view",
+      "detail": "Only components that exist in the data view can be added to the feed.",
+      "evidence": [
+        {
+          "column": "Page Nmae",
+          "suggestions": [
+            "Page Name",
+            "Page URL"
+          ]
+        }
+      ],
+      "fix": "Correct the spelling or use the suggested components.",
+      "kbQuery": "feed.column-unresolved 1 column(s) not found in the data view"
+    },
+    {
+      "id": "feed.live-start-past",
+      "severity": "high",
+      "area": "feed",
+      "title": "The live feed starts in the past",
+      "detail": "A live feed must start today or later, and 2026-11-21 is before 2026-11-22. Use a backfill feed for historical data. Dates are read in the data view's time zone (America/New_York); this check compares them with today's UTC date.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "feed.backfill-dates"
+    },
+    {
+      "id": "feed.column-no-data",
+      "severity": "medium",
+      "area": "feed",
+      "title": "1 column(s) have no data",
+      "detail": "These columns would be empty.",
+      "evidence": [
+        "Region"
+      ],
+      "fix": null,
+      "kbQuery": "dv.no-data-components"
+    },
+    {
+      "id": "feed.lookback-short",
+      "severity": "medium",
+      "area": "feed",
+      "title": "Lookback (14 days) is shorter than the persistence of 1 column(s)",
+      "detail": "Persisted values older than the lookback are not seen when the feed is generated, so values can differ from Analysis Workspace.",
+      "evidence": [
+        {
+          "dimension": "Campaign",
+          "persistenceDays": 60
+        }
+      ],
+      "fix": "Raise the lookback to at least 60 days, accepting slower deliveries.",
+      "kbQuery": "feed.lookback-short Lookback (14 days) is shorter than the persistence of 1 column(s)"
+    },
+    {
+      "id": "feed.availability",
+      "severity": "info",
+      "area": "feed",
+      "title": "Data feeds were labelled Limited Testing",
+      "detail": "Confirm that the Data feeds tab exists under Components > Exports in your CJA environment before building this plan.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "feed.availability Data feeds were labelled Limited Testing"
+    },
+    {
+      "id": "feed.timezone-boundary",
+      "severity": "info",
+      "area": "feed",
+      "title": "Feed days run in America/New_York",
+      "detail": "Hourly windows and the dates above follow the data view's time zone.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "dv.timezone"
+    },
+    {
+      "id": "feed.uniqueness-unchecked",
+      "severity": "info",
+      "area": "feed",
+      "title": "Feed name uniqueness and column overlap cannot be checked here",
+      "detail": "No CJA API for listing data feeds was found, so existing feeds are not visible. Names must be unique within the data view, and feeds on the same data view need different column definitions.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "feed.uniqueness-unchecked Feed name uniqueness and column overlap cannot be checked here"
+    }
+  ],
+  "columns": [
+    {
+      "requested": "Page Name",
+      "status": "ok",
+      "notes": [],
+      "matched": {
+        "id": "variables/page",
+        "name": "Page Name",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "Marketing Channel",
+      "status": "ok",
+      "notes": [],
+      "matched": {
+        "id": "variables/marketingchannel",
+        "name": "Marketing Channel",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "variables/campaign",
+      "status": "ok",
+      "notes": [],
+      "matched": {
+        "id": "variables/campaign",
+        "name": "Campaign",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "Page Nmae",
+      "status": "unresolved",
+      "notes": [
+        "Not found. Did you mean: Page Name, Page URL?"
+      ],
+      "matched": null,
+      "suggestions": [
+        {
+          "id": "variables/page",
+          "name": "Page Name",
+          "kind": "dimension",
+          "score": 0.75
+        },
+        {
+          "id": "variables/pageurl",
+          "name": "Page URL",
+          "kind": "dimension",
+          "score": 0.5
+        }
+      ]
+    },
+    {
+      "requested": "Day",
+      "status": "not-available",
+      "notes": [
+        "Adobe lists this component as not available in data feeds."
+      ],
+      "matched": {
+        "id": "variables/daterangeday",
+        "name": "Day",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "Events",
+      "status": "substitute",
+      "notes": [
+        "Not exportable as a metric. Use count distinct of Row ID."
+      ],
+      "matched": {
+        "id": "metrics/events",
+        "name": "Events",
+        "kind": "metric"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "User Agent",
+      "status": "conflict",
+      "notes": [
+        "Conflicts with other device columns in this plan."
+      ],
+      "matched": {
+        "id": "variables/useragent",
+        "name": "User Agent",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "Browser",
+      "status": "conflict",
+      "notes": [
+        "Conflicts with other device columns in this plan."
+      ],
+      "matched": {
+        "id": "variables/browser",
+        "name": "Browser",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    },
+    {
+      "requested": "Region",
+      "status": "no-data",
+      "notes": [
+        "The data view reports no data for this component."
+      ],
+      "matched": {
+        "id": "variables/region",
+        "name": "Region",
+        "kind": "dimension"
+      },
+      "suggestions": []
+    }
+  ],
+  "skipped": [],
+  "plan": {
+    "name": "sample-web-export",
+    "feedType": "live",
+    "frequency": "hourly",
+    "startDate": "2026-11-21",
+    "endDate": null,
+    "lookbackDays": 14,
+    "columns": [
+      "Page Name",
+      "Marketing Channel",
+      "variables/campaign",
+      "Page Nmae",
+      "Day",
+      "Events",
+      "User Agent",
+      "Browser",
+      "Region"
+    ]
+  },
+  "notes": []
+}

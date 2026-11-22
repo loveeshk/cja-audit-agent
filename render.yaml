@@ -1,0 +1,17 @@
+# Render Blueprint for the public, read-only demo of the CJA Audit Agent.
+# PUBLIC_DEMO=true makes the server strip every Adobe credential and the Anthropic key at startup, force the
+# labelled sample data and keep feed creation off (see demo-mode.js and test/demo-mode.test.js).
+# Do not add credentials to this service: demo mode removes them anyway.
+services:
+  - type: web
+    name: cja-audit-agent
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/system-status
+    envVars:
+      - key: PUBLIC_DEMO
+        value: "true"
+      - key: NODE_VERSION
+        value: "20"

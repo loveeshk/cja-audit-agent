@@ -1,0 +1,21 @@
+{
+  "dataViewId": "dv_sample0001",
+  "plan": {
+    "name": "sample-web-export",
+    "feedType": "live",
+    "frequency": "hourly",
+    "startDate": "2026-11-21",
+    "lookbackDays": 14,
+    "columns": [
+      "Page Name",
+      "Marketing Channel",
+      "variables/campaign",
+      "Page Nmae",
+      "Day",
+      "Events",
+      "User Agent",
+      "Browser",
+      "Region"
+    ]
+  }
+}

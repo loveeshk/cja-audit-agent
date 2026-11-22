@@ -1,0 +1,258 @@
+{
+  "source": "mock",
+  "sample": true,
+  "ranAt": "2026-11-22T12:00:00.000Z",
+  "target": {
+    "dataView": {
+      "id": "dv_sample0001",
+      "name": "SAMPLE - Web + Call Center DV"
+    },
+    "connection": {
+      "id": "dg_sample-0001",
+      "name": "SAMPLE - Web + Call Center"
+    }
+  },
+  "counts": {
+    "high": 2,
+    "medium": 5,
+    "low": 5,
+    "info": 6,
+    "total": 18
+  },
+  "findings": [
+    {
+      "id": "conn.backfill-failed",
+      "severity": "high",
+      "area": "connection",
+      "title": "1 backfill(s) failed for \"SAMPLE Call Center Events\"",
+      "detail": "A failed backfill leaves a gap in historical data, and a backfill feed can only export data that CJA holds.",
+      "evidence": {
+        "dataset": "SAMPLE Call Center Events",
+        "total": 2,
+        "failed": 1,
+        "inProgress": 0,
+        "completed": 1
+      },
+      "fix": "List the backfills for this dataset and check the status and date range of the failed ones.",
+      "kbQuery": "conn.backfill-failed 1 backfill(s) failed for \"SAMPLE Call Center Events\""
+    },
+    {
+      "id": "conn.import-new-data-off",
+      "severity": "high",
+      "area": "connection",
+      "title": "New data is not being imported for \"SAMPLE Call Center Events\"",
+      "detail": "The dataset reports streaming as off. In the connection settings this normally corresponds to importing all new data, so batches ingested later will not reach CJA or any data feed.",
+      "evidence": {
+        "dataset": "SAMPLE Call Center Events",
+        "dataSetId": "5f0000000000000000000002",
+        "streaming": false
+      },
+      "fix": "Confirm the \"import all new data\" setting for this dataset in the Connections interface.",
+      "kbQuery": "conn.import-new-data-off New data is not being imported for \"SAMPLE Call Center Events\""
+    },
+    {
+      "id": "conn.identity-namespace-mismatch",
+      "severity": "medium",
+      "area": "connection",
+      "title": "Event datasets use different identity namespaces",
+      "detail": "Datasets merge on the person ID value. Values from different namespaces rarely match, so journeys across these datasets can stay separate. This may be intentional.",
+      "evidence": [
+        {
+          "dataset": "SAMPLE Web Events",
+          "personIdField": "_sample.identity.ecid",
+          "identityNamespace": "ECID"
+        },
+        {
+          "dataset": "SAMPLE Call Center Events",
+          "personIdField": "_sample.crm.email",
+          "identityNamespace": "Email"
+        }
+      ],
+      "fix": "If you expect one person across these sources, align the person ID or consider stitching.",
+      "kbQuery": "conn.identity-namespace-mismatch Event datasets use different identity namespaces"
+    },
+    {
+      "id": "conn.lookup-incomplete",
+      "severity": "medium",
+      "area": "connection",
+      "title": "Lookup dataset \"SAMPLE Product Lookup\" has no key field",
+      "detail": "Without a key field the lookup cannot be joined to event data, so its values stay empty in reports and feeds.",
+      "evidence": {
+        "dataset": "SAMPLE Product Lookup",
+        "dataSetId": "5f0000000000000000000003"
+      },
+      "fix": null,
+      "kbQuery": "conn.lookup-incomplete Lookup dataset \"SAMPLE Product Lookup\" has no key field"
+    },
+    {
+      "id": "conn.stale-ingestion",
+      "severity": "medium",
+      "area": "connection",
+      "title": "\"SAMPLE Call Center Events\" has not ingested data for 10 days",
+      "detail": "The last ingestion was more than 3 days ago. A live data feed will be empty or sparse while ingestion is stale.",
+      "evidence": {
+        "dataset": "SAMPLE Call Center Events",
+        "lastIngestedTime": "2026-11-12T12:00:00.000Z",
+        "ageDays": 10,
+        "thresholdDays": 3
+      },
+      "fix": "Check recent batches for this dataset in Experience Platform, and the import setting in the connection.",
+      "kbQuery": "conn.stale-ingestion \"SAMPLE Call Center Events\" has not ingested data for 10 days"
+    },
+    {
+      "id": "dv.duplicate-names",
+      "severity": "medium",
+      "area": "dataview",
+      "title": "1 component name(s) are used more than once",
+      "detail": "When feed columns are picked by name it is ambiguous which component is meant.",
+      "evidence": [
+        {
+          "name": "Campaign",
+          "components": [
+            "dimension:variables/campaign",
+            "dimension:variables/campaign2"
+          ]
+        }
+      ],
+      "fix": "Rename the duplicates in the data view so each name is distinct.",
+      "kbQuery": "dv.duplicate-names 1 component name(s) are used more than once"
+    },
+    {
+      "id": "dv.no-data-components",
+      "severity": "medium",
+      "area": "dataview",
+      "title": "2 component(s) report no data",
+      "detail": "A feed column built on a component with no data would be empty.",
+      "evidence": {
+        "count": 2,
+        "components": [
+          "dimension:Region",
+          "metric:Revenue"
+        ]
+      },
+      "fix": "Check whether the field is populated in the schema and in the connected datasets, or leave it out of the feed.",
+      "kbQuery": "dv.no-data-components 2 component(s) report no data"
+    },
+    {
+      "id": "conn.backfill-disabled",
+      "severity": "low",
+      "area": "connection",
+      "title": "Backfill is disabled for this connection",
+      "detail": "Historical data from before the connection was created is not imported, which limits what a backfill feed can export.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "conn.retention Backfill window and destinations"
+    },
+    {
+      "id": "conn.no-description",
+      "severity": "low",
+      "area": "connection",
+      "title": "The connection has no description",
+      "detail": "A description helps the next person understand which sources this connection combines.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "conn.no-description The connection has no description"
+    },
+    {
+      "id": "dv.missing-descriptions",
+      "severity": "low",
+      "area": "dataview",
+      "title": "11 of 14 dimensions have no description",
+      "detail": "Descriptions help people choose the right columns.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "dv.missing-descriptions 11 of 14 dimensions have no description"
+    },
+    {
+      "id": "dv.no-description",
+      "severity": "low",
+      "area": "dataview",
+      "title": "The data view has no description",
+      "detail": "A description tells the next person what this data view is for.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "dv.no-description The data view has no description"
+    },
+    {
+      "id": "dv.raw-schema-names",
+      "severity": "low",
+      "area": "dataview",
+      "title": "1 component(s) are named like raw schema paths",
+      "detail": "Feed columns take their names from data view components, so readable names make the files easier to use.",
+      "evidence": [
+        "_sample.customer.tier"
+      ],
+      "fix": null,
+      "kbQuery": "dv.raw-schema-names 1 component(s) are named like raw schema paths"
+    },
+    {
+      "id": "conn.person-id-fields",
+      "severity": "info",
+      "area": "connection",
+      "title": "Person ID per event dataset",
+      "detail": "SAMPLE Web Events: _sample.identity.ecid (ECID); SAMPLE Call Center Events: _sample.crm.email (Email)",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "conn.identity-namespace-mismatch Person ID and dataset settings"
+    },
+    {
+      "id": "conn.retention",
+      "severity": "info",
+      "area": "connection",
+      "title": "Data retention is 25 months",
+      "detail": "A backfill feed must start inside the data retention window.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "conn.retention Data retention is 25 months"
+    },
+    {
+      "id": "dv.components-summary",
+      "severity": "info",
+      "area": "dataview",
+      "title": "14 dimensions and 8 metrics",
+      "detail": "Feed columns come from these components, so only components that exist here can be selected.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "Where the feed columns come from"
+    },
+    {
+      "id": "dv.persistence-summary",
+      "severity": "info",
+      "area": "dataview",
+      "title": "1 dimension(s) use persistence",
+      "detail": "A feed's lookback date range bounds how far back persistence is evaluated.",
+      "evidence": [
+        {
+          "dimension": "Campaign",
+          "days": 60,
+          "windowBased": false,
+          "allocation": "ALLOCATION_FIRST_TOUCH"
+        }
+      ],
+      "fix": null,
+      "kbQuery": "dv.persistence"
+    },
+    {
+      "id": "dv.session",
+      "severity": "info",
+      "area": "dataview",
+      "title": "Session settings returned",
+      "detail": "{\"note\":\"sample value\",\"inactivityTimeoutMinutes\":30}",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "How data view settings affect a feed sessions"
+    },
+    {
+      "id": "dv.timezone",
+      "severity": "info",
+      "area": "dataview",
+      "title": "Time zone is America/New_York",
+      "detail": "Daily feeds start and end at midnight in America/New_York, and feed dates are read in that time zone.",
+      "evidence": null,
+      "fix": null,
+      "kbQuery": "dv.timezone Time zone is America/New_York"
+    }
+  ],
+  "skipped": [],
+  "notes": []
+}

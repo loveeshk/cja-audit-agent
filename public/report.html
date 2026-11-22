@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>CJA Report Builder</title>
+<style>
+  :root {
+    --ink: #1c2b2d; --paper: #fbfaf7; --accent: #2f6f5e;
+    --accent-soft: #e4efeb; --line: #dcd8cf;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--paper); color: var(--ink); margin: 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--line); background: white; }
+  .topbar a { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #55605e; font-size: 14px; margin-bottom: 28px; }
+
+  .card { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; margin: 0 0 16px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  select, input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; font-size: 14px; font-family: inherit; background: white; color: var(--ink);
+  }
+  select:focus, input:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+
+  .checklist { max-height: 160px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .checklist label { display: flex; align-items: center; gap: 8px; font-weight: 400; font-size: 14px; margin: 6px 0; }
+  .checklist input[type="checkbox"] { width: auto; }
+
+  button.primary {
+    background: var(--ink); color: var(--paper); border: none; border-radius: 10px;
+    padding: 12px 22px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 20px;
+  }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+
+  .status { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 14px; display: none; }
+  .status.error { background: #f6e4e2; color: #a13d3d; display: block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: #55605e; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .empty-state { color: #78827f; font-size: 14px; text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-user"><a href="/">&larr; Back to CJA Audit</a> <span style="color:#78827f;font-weight:400">&nbsp;·&nbsp; CJA Report Builder</span></div>
+    <a href="/auth/logout" id="logoutLink">Log out</a>
+  </div>
+
+  <main>
+    <h1>CJA Report Builder</h1>
+    <div class="subtitle">Query your Customer Journey Analytics data view directly.</div>
+
+    <div class="card">
+      <h2>Build a report</h2>
+
+      <label for="dataviewSelect">Data view</label>
+      <select id="dataviewSelect"><option value="">Loading data views...</option></select>
+
+      <label for="dimensionSelect">Dimension (rows)</label>
+      <select id="dimensionSelect"><option value="">Select a data view first</option></select>
+
+      <label>Metrics (columns)</label>
+      <div class="checklist" id="metricsChecklist"><div class="empty-state">Select a data view first</div></div>
+
+      <div class="row">
+        <div>
+          <label for="startDate">Start date</label>
+          <input id="startDate" type="date" />
+        </div>
+        <div>
+          <label for="endDate">End date</label>
+          <input id="endDate" type="date" />
+        </div>
+      </div>
+
+      <label for="limit">Number of rows</label>
+      <select id="limit">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+      </select>
+
+      <button class="primary" id="runBtn">Run report</button>
+      <div class="status" id="reportStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Full data dump</h2>
+      <div class="subtitle" style="margin-bottom:16px;">Every dimension in this data view, each broken out against every metric. Runs one API call per dimension, so this takes longer than a single report.</div>
+
+      <label for="dumpDataviewSelect">Data view</label>
+      <select id="dumpDataviewSelect"><option value="">Loading data views...</option></select>
+
+      <div class="row">
+        <div>
+          <label for="dumpStartDate">Start date</label>
+          <input id="dumpStartDate" type="date" />
+        </div>
+        <div>
+          <label for="dumpEndDate">End date</label>
+          <input id="dumpEndDate" type="date" />
+        </div>
+      </div>
+
+      <label for="dumpLimit">Rows per dimension</label>
+      <select id="dumpLimit">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="200">200</option>
+      </select>
+
+      <button class="primary" id="dumpBtn">Run full dump</button>
+      <div class="status" id="dumpStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Results</h2>
+      <div id="resultsArea"><div class="empty-state">Run a report to see results.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Dump results</h2>
+      <div id="dumpResultsArea"><div class="empty-state">Run a full dump to see results.</div></div>
+    </div>
+  </main>
+
+  <script>
+    const dataviewSelect = document.getElementById('dataviewSelect');
+    const dimensionSelect = document.getElementById('dimensionSelect');
+    const metricsChecklist = document.getElementById('metricsChecklist');
+    const runBtn = document.getElementById('runBtn');
+    const reportStatus = document.getElementById('reportStatus');
+    const resultsArea = document.getElementById('resultsArea');
+
+    // Default date range: last 7 days
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    document.getElementById('endDate').value = today.toISOString().slice(0, 10);
+    document.getElementById('startDate').value = weekAgo.toISOString().slice(0, 10);
+
+    loadDataviews();
+
+    dataviewSelect.addEventListener('change', () => {
+      if (dataviewSelect.value) {
+        loadDimensionsAndMetrics(dataviewSelect.value);
+      }
+    });
+
+    runBtn.addEventListener('click', runReport);
+
+    async function loadDataviews() {
+      try {
+        const res = await fetchJson('/api/cja/dataviews');
+        const views = res.content || res || [];
+        if (!Array.isArray(views) || views.length === 0) {
+          dataviewSelect.innerHTML = '<option value="">No data views found</option>';
+          return;
+        }
+        dataviewSelect.innerHTML = '<option value="">Select a data view...</option>' +
+          views.map((v) => `<option value="${v.id}">${v.name || v.id}</option>`).join('');
+      } catch (err) {
+        dataviewSelect.innerHTML = '<option value="">Couldn\'t load data views</option>';
+        console.error(err);
+      }
+    }
+
+    async function loadDimensionsAndMetrics(dataviewId) {
+      dimensionSelect.innerHTML = '<option value="">Loading...</option>';
+      metricsChecklist.innerHTML = '<div class="empty-state">Loading...</div>';
+
+      try {
+        const [dims, mets] = await Promise.all([
+          fetchJson(`/api/cja/dataviews/${dataviewId}/dimensions`),
+          fetchJson(`/api/cja/dataviews/${dataviewId}/metrics`),
+        ]);
+
+        const dimensions = dims.content || dims || [];
+        const metrics = mets.content || mets || [];
+
+        dimensionSelect.innerHTML = dimensions.map((d) => `<option value="${d.id}">${d.name || d.id}</option>`).join('');
+        metricsChecklist.innerHTML = metrics.map((m) => `
+          <label><input type="checkbox" value="${m.id}" /> ${m.name || m.id}</label>
+        `).join('');
+      } catch (err) {
+        dimensionSelect.innerHTML = '<option value="">Couldn\'t load</option>';
+        metricsChecklist.innerHTML = '<div class="empty-state">Couldn\'t load metrics</div>';
+        console.error(err);
+      }
+    }
+
+    async function runReport() {
+      const dataviewId = dataviewSelect.value;
+      const dimension = dimensionSelect.value;
+      const metrics = Array.from(metricsChecklist.querySelectorAll('input:checked')).map((cb) => cb.value);
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const limit = document.getElementById('limit').value;
+
+      reportStatus.className = 'status';
+      reportStatus.textContent = '';
+
+      if (!dataviewId || !dimension || metrics.length === 0) {
+        reportStatus.className = 'status error';
+        reportStatus.textContent = 'Pick a data view, dimension, and at least one metric.';
+        return;
+      }
+
+      runBtn.disabled = true;
+      resultsArea.innerHTML = '<div class="empty-state">Running report...</div>';
+
+      try {
+        const res = await fetch('/api/cja/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataviewId,
+            dimension,
+            metrics,
+            startDate: `${startDate}T00:00:00.000`,
+            endDate: `${endDate}T23:59:59.999`,
+            limit: parseInt(limit, 10),
+          }),
+        });
+
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Report failed');
+
+        renderResults(data, metrics);
+      } catch (err) {
+        reportStatus.className = 'status error';
+        reportStatus.textContent = err.message;
+        console.error(err);
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    function renderResults(data, metricIds) {
+      const rows = data.rows || [];
+      if (rows.length === 0) {
+        resultsArea.innerHTML = '<div class="empty-state">No results for this range.</div>';
+        return;
+      }
+
+      const metricHeaders = (data.columns?.columnIds || metricIds).map((id, i) =>
+        data.columns?.dimension?.name || id
+      );
+
+      let html = '<table><thead><tr><th>Row</th>';
+      metricIds.forEach((m) => { html += `<th>${m}</th>`; });
+      html += '</tr></thead><tbody>';
+
+      rows.forEach((row) => {
+        html += `<tr><td>${row.value}</td>`;
+        (row.data || []).forEach((val) => { html += `<td>${val}</td>`; });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+
+      resultsArea.innerHTML = html;
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (res.status === 401) { window.location.href = '/auth/login'; throw new Error('Not authenticated'); }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    // --- Full data dump ---
+    const dumpDataviewSelect = document.getElementById('dumpDataviewSelect');
+    const dumpBtn = document.getElementById('dumpBtn');
+    const dumpStatus = document.getElementById('dumpStatus');
+    const dumpResultsArea = document.getElementById('dumpResultsArea');
+
+    const dToday = new Date();
+    const dWeekAgo = new Date(dToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+    document.getElementById('dumpEndDate').value = dToday.toISOString().slice(0, 10);
+    document.getElementById('dumpStartDate').value = dWeekAgo.toISOString().slice(0, 10);
+
+    loadDumpDataviews();
+
+    async function loadDumpDataviews() {
+      try {
+        const res = await fetchJson('/api/cja/dataviews');
+        const views = res.content || res || [];
+        if (!Array.isArray(views) || views.length === 0) {
+          dumpDataviewSelect.innerHTML = '<option value="">No data views found</option>';
+          return;
+        }
+        dumpDataviewSelect.innerHTML = '<option value="">Select a data view...</option>' +
+          views.map((v) => `<option value="${v.id}">${v.name || v.id}</option>`).join('');
+      } catch (err) {
+        dumpDataviewSelect.innerHTML = '<option value="">Couldn\'t load data views</option>';
+        console.error(err);
+      }
+    }
+
+    dumpBtn.addEventListener('click', runDump);
+
+    async function runDump() {
+      const dataviewId = dumpDataviewSelect.value;
+      const startDate = document.getElementById('dumpStartDate').value;
+      const endDate = document.getElementById('dumpEndDate').value;
+      const limit = document.getElementById('dumpLimit').value;
+
+      dumpStatus.className = 'status';
+      dumpStatus.textContent = '';
+
+      if (!dataviewId) {
+        dumpStatus.className = 'status error';
+        dumpStatus.textContent = 'Pick a data view first.';
+        return;
+      }
+
+      dumpBtn.disabled = true;
+      dumpResultsArea.innerHTML = '<div class="empty-state">Running dump — this can take a while depending on how many dimensions this data view has...</div>';
+
+      try {
+        const res = await fetch('/api/cja/dump', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataviewId,
+            startDate: `${startDate}T00:00:00.000`,
+            endDate: `${endDate}T23:59:59.999`,
+            limit: parseInt(limit, 10),
+          }),
+        });
+
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Dump failed');
+
+        renderDump(data.results);
+      } catch (err) {
+        dumpStatus.className = 'status error';
+        dumpStatus.textContent = err.message;
+        dumpResultsArea.innerHTML = '<div class="empty-state">Dump failed.</div>';
+        console.error(err);
+      } finally {
+        dumpBtn.disabled = false;
+      }
+    }
+
+    function renderDump(results) {
+      if (!results || results.length === 0) {
+        dumpResultsArea.innerHTML = '<div class="empty-state">No dimensions returned.</div>';
+        return;
+      }
+
+      let html = `<button class="primary" id="downloadAllBtn" style="margin-top:0;margin-bottom:16px;">Download all as one CSV</button>`;
+
+      results.forEach((r, idx) => {
+        html += `<div style="margin-bottom:24px;">`;
+        html += `<div style="font-weight:600;font-size:14px;margin-bottom:8px;">${r.dimensionName}</div>`;
+
+        if (r.error) {
+          html += `<div class="status error" style="display:block;">Couldn't fetch this dimension: ${r.error}</div>`;
+        } else if (!r.rows || r.rows.length === 0) {
+          html += `<div class="empty-state">No data for this dimension in the selected range.</div>`;
+        } else {
+          html += `<table><thead><tr><th>${r.dimensionName}</th>`;
+          r.metricNames.forEach((m) => { html += `<th>${m}</th>`; });
+          html += `</tr></thead><tbody>`;
+          r.rows.forEach((row) => {
+            html += `<tr><td>${row.value}</td>`;
+            (row.data || []).forEach((val) => { html += `<td>${val}</td>`; });
+            html += `</tr>`;
+          });
+          html += `</tbody></table>`;
+          html += `<button class="primary" style="padding:8px 14px;font-size:13px;margin-top:10px;" data-dim-idx="${idx}">Download this dimension as CSV</button>`;
+        }
+        html += `</div>`;
+      });
+
+      dumpResultsArea.innerHTML = html;
+
+      document.getElementById('downloadAllBtn').addEventListener('click', () => downloadCombinedCsv(results));
+      dumpResultsArea.querySelectorAll('[data-dim-idx]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const r = results[parseInt(btn.dataset.dimIdx, 10)];
+          downloadCsv(`${r.dimensionName}.csv`, dimensionToCsv(r));
+        });
+      });
+    }
+
+    function dimensionToCsv(r) {
+      const header = [r.dimensionName, ...r.metricNames].map(csvEscape).join(',');
+      const lines = r.rows.map((row) => [row.value, ...(row.data || [])].map(csvEscape).join(','));
+      return [header, ...lines].join('\n');
+    }
+
+    function downloadCombinedCsv(results) {
+      const blocks = results
+        .filter((r) => !r.error && r.rows && r.rows.length > 0)
+        .map((r) => `# ${r.dimensionName}\n${dimensionToCsv(r)}`);
+      downloadCsv('full-dump.csv', blocks.join('\n\n'));
+    }
+
+    function csvEscape(val) {
+      const s = String(val ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+
+    function downloadCsv(filename, csvString) {
+      const blob = new Blob([csvString], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+  <script>
+    // Hide "Log out" when login is off (local mode), so the header does not suggest a sign-in that is not there.
+    fetch('/api/system-status').then((r) => r.json()).then((s) => {
+      if (s && s.login && !s.login.enabled) document.getElementById('logoutLink').style.display = 'none';
+    }).catch(() => {});
+  </script>
+</body>
+</html>

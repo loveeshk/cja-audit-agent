@@ -1,0 +1,9 @@
+node_modules/
+.env
+logs/
+rag-index.json
+eval/compare-*.md
+eval/manual-compare.md
+eval/last-run.json
+archive/
+CLAUDE.local.md

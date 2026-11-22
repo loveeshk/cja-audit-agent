@@ -1,0 +1,25 @@
+{
+  "name": "cja-audit-agent",
+  "version": "1.0.0",
+  "description": "Read-only, evidence-grounded assistant for auditing Adobe Customer Journey Analytics setups and data feeds",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "rag:eval": "node scripts/eval-retrieval.js",
+    "rag:compare": "node scripts/compare.js",
+    "rag:prompts": "node scripts/prompts.js",
+    "rag:table": "node scripts/trace-table.js",
+    "rag:report": "node scripts/report-results.js",
+    "examples": "node scripts/make-examples.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@xenova/transformers": "^2.17.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  }
+}

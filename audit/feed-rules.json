@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "source": "https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-components/exports/cja-data-feeds/create-feed",
+    "pageLastUpdated": "2026-09-02",
+    "checkedOn": "2026-10-26",
+    "status": "Adobe labelled this feature Limited Testing. Re-check this file against the live page whenever the page changes."
+  },
+  "alwaysIncluded": ["Timestamp UTC", "Row ID", "Session ID", "Person ID", "Account ID"],
+  "dimensionsNotAvailable": [
+    "5 Minute", "15 Minute", "30 Minute", "Day", "Day of Week", "Day of Month", "Hour", "Hour of Day",
+    "Minute", "Minute of Hour", "Month", "Month of Year", "Quarter", "Quarter of Year", "Second",
+    "Week", "Week of Year", "Year", "AM/PM", "Day of Year", "Session Type", "Time Spent per Event",
+    "Time Spent per Session", "Time Spent per Person", "Weekend/Weekday"
+  ],
+  "metricsNotAvailable": [
+    "Adobe Visitors Profile", "Adobe Opportunities Union", "Adobe Opportunities Profile",
+    "Adobe Accounts Union", "Adobe Accounts Profile", "Adobe Buying Groups Union",
+    "Adobe Buying Groups Profile", "Adobe Global Accounts Union", "Adobe Global Accounts Profile",
+    "Adobe Persons Union", "Adobe Persons Profile", "Session Starts", "Session Ends",
+    "Time Spent (seconds)", "First-time Sessions", "Return Sessions", "Repeat Session"
+  ],
+  "metricsToSubstitute": {
+    "Events": "count distinct of Row ID",
+    "People": "count distinct of Person ID",
+    "Sessions": "count distinct of Session ID",
+    "Conversations": "count distinct of Conversation ID",
+    "Accounts": "count distinct of Account ID",
+    "Buying Group": "count distinct of Buying Group ID",
+    "Global Accounts": "count distinct of Global Accounts ID",
+    "Opportunities": "count distinct of Opportunity ID"
+  },
+  "deviceConflictTriggers": ["User Agent", "Mobile ID"],
+  "deviceConflictDimensions": [
+    "Browser Type", "Browser", "Mobile Manufacturer", "Mobile Device Type", "Mobile Audio Support",
+    "Mobile DRM", "Mobile Java VM", "Mobile Information Services", "Mobile Image Support",
+    "Mobile Color Depth", "Mobile Net Protocols", "Mobile Device Number", "Mobile Max Email Length",
+    "Mobile Mail Decoration", "Mobile Push To Talk", "Mobile Screen Width",
+    "Mobile Max Browser URL Length", "Mobile Operating System (deprecated)", "Mobile Screen Height",
+    "Mobile Video Support", "Mobile Cookie Support", "Mobile Max Bookmark Length",
+    "Mobile Screen Size", "Mobile Device Name", "Operating System Types", "Operating Systems"
+  ],
+  "limits": { "nameMaxChars": 255, "descriptionMaxChars": 500 },
+  "processingDelayHours": [2, 3, 4, 8],
+  "compression": ["snappy", "gzip", "zstd"],
+  "frequencies": { "live": ["hourly", "daily"], "backfill": ["daily"] },
+  "defaults": { "lookbackDays": 30, "processingDelayHours": 2 }
+}

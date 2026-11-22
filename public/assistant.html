@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>CJA Audit</title>
+<style>
+  :root {
+    --ink: #1c2b2d;
+    --paper: #fbfaf7;
+    --accent: #2f6f5e;
+    --accent-soft: #e4efeb;
+    --line: #dcd8cf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+  }
+
+  /* --- Top bar + tabs --- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    background: white;
+  }
+  .topbar-user { font-size: 14px; color: #55605e; }
+  .topbar-user strong { color: var(--ink); }
+  .topbar a {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .topbar a:hover { text-decoration: underline; }
+
+  .tabbar {
+    display: flex;
+    gap: 4px;
+    padding: 0 24px;
+    background: white;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #78827f;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab:hover:not(.active) { color: var(--ink); }
+
+  a.tab { text-decoration: none; display: inline-block; }
+  .statusstrip { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 24px; background: #fbfaf6; border-bottom: 1px solid var(--line); }
+  .pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: white; color: #55605e; cursor: help; }
+  .pill.ok { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .pill.warn { background: #fdeccd; color: #8a5a00; border-color: transparent; }
+  .pill.off { background: #eceae3; color: #55605e; border-color: transparent; }
+  .muted { color: #78827f; font-weight: 400; }
+  details.inspector { margin-top: 10px; font-size: 13px; color: #55605e; }
+  details.inspector summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+  details.inspector table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+  details.inspector th, details.inspector td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  details.inspector tr.returned td { background: var(--accent-soft); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* --- Search view --- */
+  main.search-main {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+  }
+  main.search-main h1 { font-size: 26px; margin: 0 0 6px; text-align: center; }
+  .subtitle { text-align: center; color: #55605e; font-size: 14px; margin-bottom: 36px; }
+
+  .searchbox {
+    display: flex;
+    gap: 8px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 6px 6px 6px 18px;
+    box-shadow: 0 6px 20px rgba(28, 43, 45, 0.06);
+  }
+  .searchbox input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    font-family: inherit;
+    background: transparent;
+    color: var(--ink);
+  }
+  .searchbox button {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .searchbox button:disabled { opacity: 0.5; cursor: default; }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+  .examples button {
+    background: var(--accent-soft); color: var(--accent); border: none;
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+  }
+  .examples button:hover { background: #d6e6e0; }
+
+  #result { margin-top: 32px; display: flex; flex-direction: column; gap: 20px; }
+  .turn { display: flex; flex-direction: column; gap: 10px; }
+  .question {
+    align-self: flex-start; background: var(--ink); color: var(--paper);
+    padding: 9px 16px; border-radius: 12px; border-bottom-left-radius: 4px;
+    font-size: 14px; font-weight: 600; max-width: 85%;
+  }
+  .answer-card {
+    background: white; border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 26px; line-height: 1.6; font-size: 15px;
+  }
+  .answer-card.loading-card { color: #55605e; font-style: italic; padding: 16px 26px; }
+  .error-text { color: #a13d3d; }
+  .answer-card p { margin: 0 0 12px; }
+  .answer-card p:last-child { margin-bottom: 0; }
+  .answer-card ul { margin: 0 0 12px; padding-left: 20px; }
+  .answer-card li { margin-bottom: 4px; }
+  .sources { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: #55605e; }
+  .sources summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+  .sources ol { margin: 8px 0 0; padding-left: 20px; }
+  .sources li { margin-bottom: 4px; }
+  .sources .score { color: #8a938f; margin-left: 6px; }
+  .answer-card pre {
+    background: var(--ink); color: #e8f0ee; padding: 14px 16px;
+    border-radius: 10px; overflow-x: auto; font-size: 13px; margin: 0 0 12px;
+  }
+  .answer-card code { font-family: "SF Mono", Consolas, monospace; }
+  .answer-card :not(pre) > code { background: var(--accent-soft); padding: 2px 5px; border-radius: 4px; }
+
+  main.search-main.has-results { padding-bottom: 120px; }
+
+  .bottombar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--paper); border-top: 1px solid var(--line);
+    padding: 16px 24px; display: none;
+  }
+  .bottombar.visible { display: flex; justify-content: center; }
+  .bottombar .searchbox { max-width: 700px; width: 100%; }
+
+  /* --- Feeds view --- */
+  main.feeds-main { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+  main.feeds-main h1 { font-size: 22px; margin: 0 0 4px; }
+
+  .card { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; margin: 0 0 16px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; font-size: 14px; font-family: inherit; background: white; color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .hint { font-size: 12px; color: #78827f; margin-top: 4px; }
+
+  button.primary {
+    background: var(--ink); color: var(--paper); border: none; border-radius: 10px;
+    padding: 12px 22px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 20px;
+  }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+
+  .status { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 14px; display: none; }
+  .status.success { background: var(--accent-soft); color: var(--accent); display: block; }
+  .status.error { background: #f6e4e2; color: #a13d3d; display: block; }
+
+  .feed-list { list-style: none; margin: 0; padding: 0; }
+  .feed-list li {
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; font-size: 14px;
+  }
+  .feed-list li:last-child { border-bottom: none; }
+  .feed-name { font-weight: 600; }
+  .feed-state { color: #55605e; font-size: 13px; }
+  .empty-state { color: #78827f; font-size: 14px; text-align: center; padding: 20px 0; }
+
+  /* --- Audit view --- */
+  main.audit-main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+  main.audit-main h1 { font-size: 24px; margin: 0 0 6px; }
+  .lede { color: #55605e; font-size: 14px; line-height: 1.5; margin-bottom: 4px; }
+  .banner { padding: 10px 14px; border-radius: 10px; font-size: 13px; margin: 14px 0 20px; display: none; }
+  .banner.sample { display: block; background: #fff4d6; color: #7a5a00; border: 1px solid #f0d58a; }
+  .banner.live { display: block; background: var(--accent-soft); color: var(--accent); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 6px; }
+  .chip { padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .chip.high { background: #f6e4e2; color: #a13d3d; }
+  .chip.medium { background: #fdeccd; color: #8a5a00; }
+  .chip.low { background: #e6edf5; color: #3a5a7a; }
+  .chip.info { background: #eceae3; color: #55605e; }
+  .target-line { font-size: 13px; color: #55605e; margin-top: 14px; }
+  .finding { border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; margin: 10px 0; background: white; }
+  .finding.high { border-left-color: #a13d3d; }
+  .finding.medium { border-left-color: #d79a1e; }
+  .finding.low { border-left-color: #6d8fb3; }
+  .finding.info { border-left-color: #b8b5aa; }
+  .finding summary { cursor: pointer; padding: 11px 14px; font-size: 14px; font-weight: 600; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .finding .body { padding: 0 14px 14px; font-size: 14px; line-height: 1.55; color: #33403f; }
+  .finding .body p { margin: 0 0 8px; }
+  .finding code.id { font-size: 12px; color: #78827f; font-weight: 400; }
+  .finding pre { background: #f4f2ec; padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin: 8px 0 0; }
+  .group-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #78827f; margin: 22px 0 4px; }
+  .skipped { font-size: 13px; color: #78827f; margin-top: 14px; line-height: 1.5; }
+  table.cols { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px; }
+  table.cols th, table.cols td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.cols th { color: #78827f; font-weight: 600; }
+  .st { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .st.ok { background: var(--accent-soft); color: var(--accent); }
+  .st.bad { background: #f6e4e2; color: #a13d3d; }
+  .st.warn { background: #fdeccd; color: #8a5a00; }
+  .st.note { background: #eceae3; color: #55605e; }
+  textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; background: white; color: var(--ink); resize: vertical; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  button.secondary { background: white; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 20px; margin-left: 8px; }
+  button.secondary:disabled { opacity: 0.5; cursor: default; }
+  #explainResult { margin-top: 16px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-user" id="userInfo">Loading...</div>
+    <a href="/auth/logout" id="logoutLink">Log out</a>
+  </div>
+  <div class="statusstrip" id="statusStrip" aria-label="How the app is running"></div>
+
+  <div class="tabbar">
+    <button class="tab active" data-view="auditView">CJA Audit</button>
+    <button class="tab" data-view="askView">Ask the docs</button>
+    <button class="tab" data-view="feedsView">Data Feeds (classic)</button>
+    <a class="tab" href="/report" id="reportTab">Report Builder</a>
+  </div>
+
+  <!-- ================= AUDIT VIEW ================= -->
+  <div id="auditView" class="view active">
+    <main class="audit-main">
+      <h1>CJA Audit</h1>
+      <div class="lede">Read-only checks on a Customer Journey Analytics connection and data view, and a pre-flight check for a data feed you are planning. Nothing here changes your Adobe setup.</div>
+      <div id="sourceBanner" class="banner"></div>
+
+      <div class="card">
+        <h2>1. Audit a data view and its connection</h2>
+        <label for="dataViewSelect">Data view</label>
+        <select id="dataViewSelect"><option value="">Loading data views...</option></select>
+        <button class="primary" id="runAuditBtn">Run audit</button>
+        <div class="status" id="auditStatus"></div>
+        <div id="auditResult"></div>
+      </div>
+
+      <div class="card">
+        <h2>2. Check a planned data feed (pre-flight)</h2>
+        <div class="hint" style="margin:-8px 0 14px">CJA data feeds are created in the CJA interface (Components &gt; Exports). This checks your plan against the selected data view and Adobe's published feed rules before you build it.</div>
+        <label for="planName">Feed name</label>
+        <input id="planName" placeholder="e.g. web-events-daily" />
+        <div class="row">
+          <div>
+            <label for="planType">Feed type</label>
+            <select id="planType"><option value="live">Live</option><option value="backfill">Backfill</option></select>
+          </div>
+          <div>
+            <label for="planFrequency">Frequency</label>
+            <select id="planFrequency"><option value="daily">Daily</option><option value="hourly">Hourly</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label for="planStart">Start date</label><input id="planStart" type="date" /></div>
+          <div><label for="planEnd">End / expiration date (optional)</label><input id="planEnd" type="date" /></div>
+        </div>
+        <div class="row">
+          <div><label for="planLookback">Lookback (days)</label><input id="planLookback" type="number" min="1" placeholder="30 (default)" /></div>
+          <div>
+            <label for="planDelay">Processing delay</label>
+            <select id="planDelay"><option value="">Default</option><option value="2">2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="8">8 hours</option></select>
+          </div>
+          <div>
+            <label for="planCompression">Compression</label>
+            <select id="planCompression"><option value="">Default</option><option value="snappy">Snappy</option><option value="gzip">GZip</option><option value="zstd">Zstandard</option></select>
+          </div>
+        </div>
+        <label for="planColumns">Columns (one per line, names or IDs)</label>
+        <textarea id="planColumns" rows="8" placeholder="Page Name&#10;Marketing Channel&#10;variables/campaign"></textarea>
+        <div class="hint">Timestamp UTC, Row ID, Session ID and Person ID are always included, so leave them out.</div>
+        <button class="primary" id="runPlanBtn">Validate plan</button>
+        <button class="secondary" id="fillExampleBtn" type="button" style="display:none">Fill with an example</button>
+        <div class="status" id="planStatus"></div>
+        <div id="planResult"></div>
+      </div>
+
+      <div class="card">
+        <h2>3. Explain and export</h2>
+        <div class="hint" style="margin:-8px 0 14px">The explanation retrieves the matching CJA reference notes and cites them. It only discusses findings the audit produced (high and medium).</div>
+        <label for="explainQuestion">Optional question about these results</label>
+        <input id="explainQuestion" placeholder="e.g. What should I fix first?" />
+        <button class="primary" id="explainBtn">Explain findings</button>
+        <button class="secondary" id="downloadBtn" type="button">Download report (.md)</button>
+        <div class="status" id="explainStatus"></div>
+        <div id="explainResult" class="answer-card" style="display:none"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= ASK VIEW ================= -->
+  <div id="askView" class="view">
+    <main class="search-main" id="mainArea">
+      <div id="initialSearch">
+        <h1>Ask the CJA docs</h1>
+        <div class="subtitle">Answers come from the CJA reference notes, with the sections used shown under each answer.</div>
+
+        <div class="searchbox">
+          <input id="queryInput" type="text" placeholder="e.g. Which columns cannot be included in a CJA data feed?" />
+          <button id="searchBtn">Ask</button>
+        </div>
+
+        <div class="examples">
+          <button data-q="Which columns cannot be included in a CJA data feed?">Unavailable columns</button>
+          <button data-q="How is a CJA data feed different from an Adobe Analytics data feed?">CJA vs Adobe Analytics</button>
+          <button data-q="What does the lookback date range do?">Lookback range</button>
+          <button data-q="Why do I get the error User region is missing?">User region error</button>
+        </div>
+      </div>
+
+      <div id="result"></div>
+    </main>
+
+    <div class="bottombar" id="bottomBar">
+      <div class="searchbox">
+        <input id="bottomQueryInput" type="text" placeholder="Ask a follow-up..." />
+        <button id="bottomSearchBtn">Ask</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FEEDS VIEW ================= -->
+  <div id="feedsView" class="view">
+    <main class="feeds-main">
+      <h1>Data Feed Manager</h1>
+      <div class="subtitle" style="text-align:left">Create and view classic Adobe Analytics data feeds (report suite based). CJA data feeds are created in the CJA interface; use the CJA Audit tab to check a plan first.</div>
+
+      <div class="card">
+        <h2>Create a new feed</h2>
+        <form id="feedForm">
+          <label for="feedName">Feed name</label>
+          <input id="feedName" required placeholder="e.g. site-checkout-events" />
+
+          <label for="rsid">Report suite / Data view ID</label>
+          <input id="rsid" required placeholder="e.g. mycompanyprod" />
+
+          <label for="columnPreset">Column preset ID</label>
+          <input id="columnPreset" required placeholder="e.g. 1" />
+          <div class="hint">Column presets are configured separately in Adobe's UI first — this references an existing one.</div>
+
+          <div class="row">
+            <div>
+              <label for="startDate">Start date</label>
+              <input id="startDate" type="datetime-local" required />
+            </div>
+            <div>
+              <label for="endDate">End date (optional)</label>
+              <input id="endDate" type="datetime-local" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="interval">Frequency</label>
+              <select id="interval">
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+              </select>
+            </div>
+            <div>
+              <label for="delay">Processing delay (hours)</label>
+              <select id="delay">
+                <option value="0">None</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="cloudLocationId">Cloud destination location</label>
+          <select id="cloudLocationId" required>
+            <option value="">Loading locations...</option>
+          </select>
+          <div class="hint">Pulled from your existing locations in Adobe (Components &gt; Exports &gt; Locations). Set one up there first if this list is empty.</div>
+
+          <label for="notifyEmails">Notify on completion (optional)</label>
+          <input id="notifyEmails" placeholder="you@company.com, teammate@company.com" />
+
+          <button type="submit" class="primary" id="submitBtn">Create feed</button>
+          <div class="status" id="createStatus"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Existing feeds</h2>
+        <div id="feedList"><div class="empty-state">Loading...</div></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // --- Shared: tabs + who's logged in ---
+    document.querySelectorAll('.tab[data-view]').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        document.querySelectorAll('.tab[data-view]').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+        tabBtn.classList.add('active');
+        document.getElementById(tabBtn.dataset.view).classList.add('active');
+        if (tabBtn.dataset.view === 'feedsView' && !window.feedsLoaded) {
+          window.feedsLoaded = true;
+          loadFeeds();
+          loadLocations();
+          loadFeedSettings();
+        }
+      });
+    });
+
+    // Header and status strip. The status says whether login is on, so "Signed in" is only shown when it is true.
+    async function initHeader() {
+      const info = document.getElementById('userInfo');
+      let status = null;
+      try { status = await (await fetch('/api/system-status')).json(); } catch (_) { /* the strip simply stays empty */ }
+      if (status) renderStatus(status);
+      if (status && !status.login.enabled) {
+        info.innerHTML = 'Local mode <span class="muted">· login is off, this computer only</span>';
+        document.getElementById('logoutLink').style.display = 'none';
+        return;
+      }
+      try {
+        const data = await (await fetch('/api/me')).json();
+        info.innerHTML = `Signed in as <strong>${escapeHtml(data.user.name || data.user.email)}</strong>`;
+      } catch (_) {
+        info.textContent = 'Not signed in';
+      }
+    }
+
+    function renderStatus(s) {
+      const pills = [
+        [s.data.label, s.data.source === 'live' ? 'ok' : 'warn', s.data.detail],
+        [s.answers.label, s.answers.mode === 'claude' ? 'ok' : 'warn', s.answers.detail],
+        [s.retrieval.label, s.retrieval.ready ? 'ok' : 'warn', s.retrieval.detail],
+        [s.login.label, s.login.enabled ? 'ok' : 'off', s.login.detail],
+        [s.safety.feedCreation.label, s.safety.feedCreation.enabled ? 'warn' : 'ok', s.safety.feedCreation.detail],
+        ['Audit: read-only', 'ok', 'The audit only reads from Adobe. It never changes anything.'],
+      ];
+      document.getElementById('statusStrip').innerHTML = pills
+        .map(([label, kind, tip]) => `<span class="pill ${kind}" title="${escapeHtml(tip)}">${escapeHtml(label)}</span>`).join('');
+    }
+    initHeader();
+
+    // --- Ask the docs ---
+    const input = document.getElementById('queryInput');
+    const btn = document.getElementById('searchBtn');
+    const bottomInput = document.getElementById('bottomQueryInput');
+    const bottomBtn = document.getElementById('bottomSearchBtn');
+    const bottomBar = document.getElementById('bottomBar');
+    const initialSearch = document.getElementById('initialSearch');
+    const mainArea = document.getElementById('mainArea');
+    const result = document.getElementById('result');
+    const searchHistory = []; // { query, answer } pairs, sent back on each request for context
+
+    document.querySelectorAll('.examples button').forEach((exBtn) => {
+      exBtn.addEventListener('click', () => {
+        input.value = exBtn.dataset.q;
+        runSearch(input, btn);
+      });
+    });
+
+    btn.addEventListener('click', () => runSearch(input, btn));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runSearch(input, btn);
+    });
+
+    bottomBtn.addEventListener('click', () => runSearch(bottomInput, bottomBtn));
+    bottomInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runSearch(bottomInput, bottomBtn);
+    });
+
+    async function runSearch(activeInput, activeBtn) {
+      const query = activeInput.value.trim();
+      if (!query) return;
+
+      activeBtn.disabled = true;
+      activeInput.value = '';
+
+      if (searchHistory.length === 0) {
+        initialSearch.style.display = 'none';
+        mainArea.classList.add('has-results');
+        bottomBar.classList.add('visible');
+      }
+
+      const turnId = `turn-${searchHistory.length}-${Date.now()}`;
+      const turnEl = document.createElement('div');
+      turnEl.className = 'turn';
+      turnEl.innerHTML = `
+        <div class="question">${escapeHtml(query)}</div>
+        <div class="answer-card loading-card" id="${turnId}">Searching the CJA notes...</div>
+      `;
+      result.appendChild(turnEl);
+      turnEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, history: searchHistory }),
+        });
+
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+
+        searchHistory.push({ query, answer: data.answer });
+
+        const answerEl = document.getElementById(turnId);
+        answerEl.classList.remove('loading-card');
+        answerEl.innerHTML = formatAnswer(data.answer);
+        if (data.manualPrompt) answerEl.insertAdjacentHTML('beforeend', manualPromptHtml(data.manualPrompt));
+        answerEl.insertAdjacentHTML('beforeend', renderSources(data.sources, data.fallbackReason));
+        answerEl.insertAdjacentHTML('beforeend', renderInspector(data.trace));
+        turnEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } catch (err) {
+        const answerEl = document.getElementById(turnId);
+        answerEl.classList.remove('loading-card');
+        const unreachable = err instanceof TypeError;
+        answerEl.innerHTML = '<span class="error-text">' + escapeHtml(unreachable
+          ? 'Cannot reach the server. Start it with npm start and open http://localhost:3000 in the browser (not the HTML file).'
+          : (err.message || 'Something went wrong. Please try again.')) + '</span>';
+        console.error(err);
+      } finally {
+        activeBtn.disabled = false;
+        bottomInput.focus();
+      }
+    }
+
+    function renderSources(sources, fallbackReason) {
+      let html = '';
+      if (fallbackReason) {
+        html += `<div class="sources">Answered from the full notes (${escapeHtml(fallbackReason)}).</div>`;
+      }
+      if (!Array.isArray(sources) || sources.length === 0) return html;
+      const items = sources.map((s) =>
+        `<li>[${s.n}] ${escapeHtml(s.section)} <span class="score">notes lines ${escapeHtml(s.lines)} · match ${s.score}</span></li>`
+      ).join('');
+      return html + `<details class="sources"><summary>Sources (${sources.length})</summary><ol>${items}</ol></details>`;
+    }
+
+    // Shows how the sources were chosen: every candidate the retriever examined, with its scores.
+    function renderInspector(trace) {
+      if (!trace || !Array.isArray(trace.candidates) || !trace.candidates.length) return '';
+      const rows = trace.candidates.map((c) =>
+        `<tr class="${c.returned ? 'returned' : ''}"><td>${c.rank}</td><td>${escapeHtml(c.section)}</td><td>${c.semantic}</td><td>${c.keyword}</td><td>${c.returned ? 'used' : 'not used'}</td></tr>`
+      ).join('');
+      return `<details class="inspector"><summary>Why these sources? (retrieval inspector)</summary>
+        <div>Searched for: <em>${escapeHtml(trace.retrievalQuery)}</em>. Similarity must reach ${trace.params.minScore} to be used, and at most ${trace.params.k} are sent to the model.</div>
+        <table><thead><tr><th>#</th><th>Section</th><th>Similarity</th><th>Keyword</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+    }
+
+    function manualPromptHtml(text) {
+      return `<div class="manual"><textarea readonly rows="9">${escapeHtml(text)}</textarea>
+        <button type="button" class="secondary copyBtn" style="margin-top:8px;margin-left:0">Copy prompt</button></div>`;
+    }
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.copyBtn');
+      if (!btn) return;
+      const ta = btn.parentElement.querySelector('textarea');
+      try { await navigator.clipboard.writeText(ta.value); btn.textContent = 'Copied'; }
+      catch (_) { ta.select(); btn.textContent = 'Press Ctrl+C to copy'; }
+      setTimeout(() => { btn.textContent = 'Copy prompt'; }, 2500);
+    });
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatAnswer(text) {
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const codeBlocks = [];
+      let working = text.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
+        codeBlocks.push(esc(code.trim()));
+        return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
+      });
+      working = esc(working);
+      working = working.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+      const lines = working.split('\n');
+      let html = '';
+      let inList = false;
+      for (const line of lines) {
+        const bulletMatch = line.match(/^[-*]\s+(.*)/);
+        if (bulletMatch) {
+          if (!inList) { html += '<ul>'; inList = true; }
+          html += `<li>${bulletMatch[1]}</li>`;
+        } else {
+          if (inList) { html += '</ul>'; inList = false; }
+          if (line.trim()) html += `<p>${line}</p>`;
+        }
+      }
+      if (inList) html += '</ul>';
+      html = html.replace(/@@CODEBLOCK(\d+)@@/g, (_, i) => `<pre><code>${codeBlocks[i]}</code></pre>`);
+      return html;
+    }
+
+    // --- CJA Audit view ---
+    const auditState = { audit: null, plan: null, explanation: null, sample: false };
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(el, kind, msg) {
+      el.className = kind ? `status ${kind}` : 'status';
+      el.textContent = msg || '';
+    }
+
+    async function api(path, options) {
+      const res = await fetch(path, options);
+      if (res.status === 401) { window.location.href = '/auth/login'; throw new Error('Not signed in'); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    const post = (path, body) => api(path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+
+    async function initAudit() {
+      try {
+        const [status, list] = await Promise.all([api('/api/audit/status'), api('/api/audit/dataviews')]);
+        auditState.sample = status.sample;
+        const banner = $('sourceBanner');
+        banner.className = `banner ${status.sample ? 'sample' : 'live'}`;
+        banner.textContent = status.sample
+          ? 'Sample data: no Adobe credentials are configured, so this audit runs on built-in sample data with deliberate problems. Add the Server-to-Server credentials in .env to audit your own environment.'
+          : 'Connected to Customer Journey Analytics (read-only).';
+        $('fillExampleBtn').style.display = status.sample ? 'inline-block' : 'none';
+        const views = list.dataViews || [];
+        $('dataViewSelect').innerHTML = views.length
+          ? views.map((v) => `<option value="${escapeHtml(v.id)}">${escapeHtml(v.name || v.id)}</option>`).join('')
+          : '<option value="">No data views found</option>';
+      } catch (err) {
+        $('dataViewSelect').innerHTML = '<option value="">Could not load data views</option>';
+        setStatus($('auditStatus'), 'error', err.message);
+      }
+    }
+
+    const SEV = { high: 'High', medium: 'Medium', low: 'Low', info: 'Info' };
+    const AREA = { connection: 'Connection', dataview: 'Data view', feed: 'Planned feed' };
+
+    function chips(counts) {
+      return `<div class="chips">${['high', 'medium', 'low', 'info'].map((s) =>
+        `<span class="chip ${s}">${SEV[s]}: ${counts[s] || 0}</span>`).join('')}</div>`;
+    }
+
+    function findingHtml(f) {
+      const evidence = f.evidence ? `<pre>${escapeHtml(JSON.stringify(f.evidence, null, 2))}</pre>` : '';
+      const fix = f.fix ? `<p><strong>Next step:</strong> ${escapeHtml(f.fix)}</p>` : '';
+      return `<details class="finding ${f.severity}" ${f.severity === 'high' ? 'open' : ''}>
+        <summary><span class="chip ${f.severity}">${SEV[f.severity]}</span> ${escapeHtml(f.title)} <code class="id">${escapeHtml(f.id)}</code></summary>
+        <div class="body"><p>${escapeHtml(f.detail)}</p>${fix}${evidence}</div></details>`;
+    }
+
+    function groupedFindings(findings) {
+      return ['connection', 'dataview', 'feed'].map((area) => {
+        const list = findings.filter((f) => f.area === area);
+        return list.length ? `<div class="group-title">${AREA[area]}</div>${list.map(findingHtml).join('')}` : '';
+      }).join('');
+    }
+
+    function skippedHtml(skipped, notes) {
+      const parts = [...(notes || []), ...(skipped || []).map((s) => `Skipped: ${s}`)];
+      return parts.length ? `<div class="skipped"><strong>Not checked or limited:</strong><br>${parts.map(escapeHtml).join('<br>')}</div>` : '';
+    }
+
+    function targetLine(t) {
+      if (!t) return '';
+      const conn = t.connection ? `${escapeHtml(t.connection.name || '')} (${escapeHtml(t.connection.id)})` : 'not readable';
+      return `<div class="target-line">Data view: <strong>${escapeHtml(t.dataView.name)}</strong> &rarr; Connection: ${conn}</div>`;
+    }
+
+    $('runAuditBtn').addEventListener('click', async () => {
+      const id = $('dataViewSelect').value;
+      if (!id) { setStatus($('auditStatus'), 'error', 'Choose a data view first.'); return; }
+      const b = $('runAuditBtn');
+      b.disabled = true;
+      setStatus($('auditStatus'), '', '');
+      $('auditResult').innerHTML = '<div class="empty-state">Running checks...</div>';
+      try {
+        const data = await post('/api/audit/run', { dataViewId: id });
+        auditState.audit = data;
+        auditState.explanation = null;
+        $('auditResult').innerHTML = targetLine(data.target) + chips(data.counts) + groupedFindings(data.findings) + skippedHtml(data.skipped, data.notes);
+      } catch (err) {
+        $('auditResult').innerHTML = '';
+        setStatus($('auditStatus'), 'error', err.message);
+      } finally {
+        b.disabled = false;
+      }
+    });
+
+    function statusClass(s) {
+      if (s === 'ok') return 'ok';
+      if (['unresolved', 'not-available', 'substitute', 'conflict'].includes(s)) return 'bad';
+      if (['ambiguous', 'no-data'].includes(s)) return 'warn';
+      return 'note';
+    }
+
+    function columnsTable(columns) {
+      if (!columns || !columns.length) return '';
+      return `<table class="cols"><thead><tr><th>Requested</th><th>Status</th><th>Matched component / notes</th></tr></thead><tbody>${columns.map((c) => `
+        <tr><td>${escapeHtml(c.requested)}</td>
+        <td><span class="st ${statusClass(c.status)}">${escapeHtml(c.status)}</span></td>
+        <td>${c.matched ? `${escapeHtml(c.matched.kind)}: ${escapeHtml(c.matched.name)} <code>${escapeHtml(c.matched.id)}</code><br>` : ''}${escapeHtml((c.notes || []).join(' '))}</td></tr>`).join('')}</tbody></table>`;
+    }
+
+    $('runPlanBtn').addEventListener('click', async () => {
+      const id = $('dataViewSelect').value;
+      if (!id) { setStatus($('planStatus'), 'error', 'Choose a data view in step 1 first.'); return; }
+      const b = $('runPlanBtn');
+      b.disabled = true;
+      setStatus($('planStatus'), '', '');
+      $('planResult').innerHTML = '<div class="empty-state">Validating...</div>';
+      const plan = {
+        name: $('planName').value,
+        feedType: $('planType').value,
+        frequency: $('planFrequency').value,
+        startDate: $('planStart').value,
+        endDate: $('planEnd').value,
+        lookbackDays: $('planLookback').value,
+        processingDelayHours: $('planDelay').value,
+        compression: $('planCompression').value,
+        columns: $('planColumns').value.split('\n').map((s) => s.trim()).filter(Boolean),
+      };
+      try {
+        const data = await post('/api/audit/feed-plan', { dataViewId: id, plan });
+        auditState.plan = data;
+        auditState.explanation = null;
+        $('planResult').innerHTML = targetLine(data.target) + chips(data.counts) + columnsTable(data.columns) + groupedFindings(data.findings) + skippedHtml(data.skipped, data.notes);
+      } catch (err) {
+        $('planResult').innerHTML = '';
+        setStatus($('planStatus'), 'error', err.message);
+      } finally {
+        b.disabled = false;
+      }
+    });
+
+    $('fillExampleBtn').addEventListener('click', () => {
+      const day = (offset) => { const d = new Date(Date.now() + offset * 86400000); return d.toISOString().slice(0, 10); };
+      $('planName').value = 'sample-web-export';
+      $('planType').value = 'live';
+      $('planFrequency').value = 'hourly';
+      $('planStart').value = day(-1);
+      $('planEnd').value = '';
+      $('planLookback').value = '14';
+      $('planColumns').value = ['Page Name', 'Marketing Channel', 'variables/campaign', 'Page Nmae', 'Day', 'Events', 'User Agent', 'Browser', 'Region'].join('\n');
+    });
+
+    $('explainBtn').addEventListener('click', async () => {
+      const findings = [...(auditState.audit?.findings || []), ...(auditState.plan?.findings || [])];
+      if (!findings.length) { setStatus($('explainStatus'), 'error', 'Run the audit or validate a plan first.'); return; }
+      const b = $('explainBtn');
+      b.disabled = true;
+      setStatus($('explainStatus'), '', '');
+      const box = $('explainResult');
+      box.style.display = 'block';
+      box.classList.add('loading-card');
+      box.textContent = 'Retrieving the matching notes and writing the explanation...';
+      try {
+        const data = await post('/api/audit/explain', { findings, question: $('explainQuestion').value });
+        auditState.explanation = data;
+        box.classList.remove('loading-card');
+        box.innerHTML = formatAnswer(data.markdown) + (data.manualPrompt ? manualPromptHtml(data.manualPrompt) : '') + renderSources(data.sources);
+      } catch (err) {
+        box.style.display = 'none';
+        setStatus($('explainStatus'), 'error', err.message);
+      } finally {
+        b.disabled = false;
+      }
+    });
+
+    $('downloadBtn').addEventListener('click', async () => {
+      if (!auditState.audit && !auditState.plan) { setStatus($('explainStatus'), 'error', 'Run the audit or validate a plan first.'); return; }
+      try {
+        const res = await fetch('/api/audit/markdown', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audit: auditState.audit, plan: auditState.plan, explanation: auditState.explanation }),
+        });
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+        if (!res.ok) throw new Error('Could not build the report');
+        const blob = new Blob([await res.text()], { type: 'text/markdown' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `cja-audit-${new Date().toISOString().slice(0, 10)}.md`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        setStatus($('explainStatus'), 'error', err.message);
+      }
+    });
+
+    initAudit();
+
+    // --- Feeds view ---
+    const feedForm = document.getElementById('feedForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const createStatus = document.getElementById('createStatus');
+    const feedList = document.getElementById('feedList');
+
+    async function loadLocations() {
+      const select = document.getElementById('cloudLocationId');
+      try {
+        const res = await fetch('/api/locations');
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) { select.innerHTML = `<option value="">${escapeHtml(data.error || 'Could not load locations')}</option>`; return; }
+        const locations = data.content || data || [];
+
+        if (!Array.isArray(locations) || locations.length === 0) {
+          select.innerHTML = '<option value="">No locations found — set one up in Adobe\'s UI first</option>';
+          return;
+        }
+
+        select.innerHTML = '<option value="">Select a destination...</option>' + locations.map((loc) =>
+          `<option value="${loc.uuid}">${loc.name} (${loc.type})</option>`
+        ).join('');
+      } catch (err) {
+        select.innerHTML = '<option value="">Couldn\'t load locations</option>';
+        console.error(err);
+      }
+    }
+
+    async function loadFeedSettings() {
+      try {
+        const res = await fetch('/api/feed-settings');
+        const s = await res.json();
+        if (!s.creationEnabled) {
+          submitBtn.disabled = true;
+          createStatus.className = 'status error';
+          createStatus.textContent = 'Creating feeds is turned off (set ALLOW_FEED_CREATION=true in .env and restart to allow it). Listing feeds still works.';
+        }
+      } catch (_) { /* the server will still refuse a creation it does not allow */ }
+    }
+
+    feedForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      createStatus.className = 'status';
+      createStatus.textContent = '';
+
+      const toIso = (val) => (val ? new Date(val).toISOString() : null);
+
+      const payload = {
+        feedName: document.getElementById('feedName').value,
+        rsid: document.getElementById('rsid').value,
+        columnPreset: document.getElementById('columnPreset').value,
+        startDate: toIso(document.getElementById('startDate').value),
+        endDate: toIso(document.getElementById('endDate').value),
+        interval: document.getElementById('interval').value,
+        delay: parseInt(document.getElementById('delay').value, 10),
+        cloudLocationId: document.getElementById('cloudLocationId').value,
+        notifyEmails: document.getElementById('notifyEmails').value,
+      };
+
+      const summary = 'Create this classic Adobe Analytics data feed?\n\n' +
+        'Name: ' + payload.feedName + '\nReport suite: ' + payload.rsid + '\nColumns: ' + payload.columnPreset +
+        '\nInterval: ' + payload.interval + '\nStarts: ' + payload.startDate + '\n\nThis changes your Adobe setup.';
+      if (!window.confirm(summary)) { submitBtn.disabled = false; return; }
+      payload.confirm = true;
+
+      try {
+        const res = await fetch('/api/feeds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create feed');
+
+        createStatus.className = 'status success';
+        createStatus.textContent = `Feed "${payload.feedName}" created successfully.`;
+        feedForm.reset();
+        loadFeeds();
+      } catch (err) {
+        createStatus.className = 'status error';
+        createStatus.textContent = err.message;
+        console.error(err);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function loadFeeds() {
+      try {
+        const res = await fetch('/api/feeds');
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) { feedList.innerHTML = `<div class="empty-state">${escapeHtml(data.error || 'Could not load feeds.')}</div>`; return; }
+        const feeds = data.content || data || [];
+
+        if (!Array.isArray(feeds) || feeds.length === 0) {
+          feedList.innerHTML = '<div class="empty-state">No data feeds yet.</div>';
+          return;
+        }
+
+        feedList.innerHTML = `<ul class="feed-list">${feeds.map((f) => `
+          <li>
+            <span class="feed-name">${f.feedName || 'Unnamed'}</span>
+            <span class="feed-state">${(f.metadata && f.metadata.feedState) || 'unknown'}</span>
+          </li>
+        `).join('')}</ul>`;
+      } catch (err) {
+        feedList.innerHTML = '<div class="empty-state">Couldn\'t load feeds.</div>';
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

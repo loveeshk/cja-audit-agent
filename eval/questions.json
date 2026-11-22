@@ -1,0 +1,33 @@
+{
+  "inScope": [
+    { "q": "Which columns cannot be included in a CJA data feed?", "expect": ["Columns that are not available in a feed"] },
+    { "q": "Is the Events metric available in a data feed?", "expect": ["Metrics that must be substituted in a feed"] },
+    { "q": "Which columns are always included in every feed?", "expect": ["Columns that are always included in a feed"] },
+    { "q": "Can I add Browser together with User Agent in one feed?", "expect": ["Columns that cannot be combined in a feed"] },
+    { "q": "What does the lookback date range do?", "expect": ["Lookback date range"] },
+    { "q": "What is the default processing delay?", "expect": ["Processing delay"] },
+    { "q": "Can an hourly feed be a backfill feed?", "expect": ["Feed frequency", "Feed type, start date and end date"] },
+    { "q": "What file format are CJA feeds delivered in?", "expect": ["Output format and file paths", "Compression, destination and manifest"] },
+    { "q": "Can CJA data feeds be delivered over SFTP?", "expect": ["Backfill window and destinations"], "note": "CJA feeds do not list SFTP; Adobe Analytics feeds do" },
+    { "q": "Which cloud destinations can CJA data feeds use?", "expect": ["Backfill window and destinations", "Prerequisites for data feeds"] },
+    { "q": "Where do the columns of a CJA feed come from?", "expect": ["Where the feed columns come from", "How data view settings affect a feed"] },
+    { "q": "What is the difference between stitching and merging datasets?", "expect": ["Stitching"] },
+    { "q": "Why do I get the error User region is missing?", "expect": ["The User region is missing error"] },
+    { "q": "What does the parentDataGroupId field mean?", "expect": ["Data views API fields", "dv.no-connection"] },
+    { "q": "What does the hasData field tell me about a dimension?", "expect": ["Dimensions and metrics API fields", "dv.no-data-components"] },
+    { "q": "Which permission do I need to list all connections through the API?", "expect": ["Connections API fields", "Credentials and permissions"] },
+    { "q": "Why would a live feed be empty?", "expect": ["conn.stale-ingestion", "conn.import-new-data-off"], "note": "needs reasoning across notes, expected to be harder" },
+    { "q": "What about backfill feeds?", "prev": "Can a live feed start in the past?", "expect": ["Feed type, start date and end date"], "note": "follow-up: needs the previous question to resolve" }
+  ],
+  "outOfScope": [
+    "What is the push method for the video pause event?",
+    "How do I set up Adobe Target activities?",
+    "How do I write a SQL query in Query Service?",
+    "How do I build a calculated metric in Analysis Workspace?",
+    "What is the capital of France?"
+  ],
+  "compare": [
+    "Which columns cannot be included in a CJA data feed?",
+    "Can CJA data feeds be delivered over SFTP?"
+  ]
+}

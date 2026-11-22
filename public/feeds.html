@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Data Feed Manager</title>
+<style>
+  :root {
+    --ink: #1c2b2d; --paper: #fbfaf7; --accent: #2f6f5e;
+    --accent-soft: #e4efeb; --line: #dcd8cf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--paper); color: var(--ink); margin: 0;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 24px; border-bottom: 1px solid var(--line); background: white;
+  }
+  .topbar a { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #55605e; font-size: 14px; margin-bottom: 28px; }
+
+  .card {
+    background: white; border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px; margin-bottom: 20px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 16px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; font-size: 14px; font-family: inherit; background: white; color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .hint { font-size: 12px; color: #78827f; margin-top: 4px; }
+
+  button.primary {
+    background: var(--ink); color: var(--paper); border: none; border-radius: 10px;
+    padding: 12px 22px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 20px;
+  }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+
+  .status { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 14px; display: none; }
+  .status.success { background: var(--accent-soft); color: var(--accent); display: block; }
+  .status.error { background: #f6e4e2; color: #a13d3d; display: block; }
+
+  .feed-list { list-style: none; margin: 0; padding: 0; }
+  .feed-list li {
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; font-size: 14px;
+  }
+  .feed-list li:last-child { border-bottom: none; }
+  .feed-name { font-weight: 600; }
+  .feed-state { color: #55605e; font-size: 13px; }
+  .empty-state { color: #78827f; font-size: 14px; text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div></div>
+    <a href="/auth/logout">Log out</a>
+  </div>
+
+  <main>
+    <h1>Data Feed Manager</h1>
+    <div class="subtitle">Create and view Adobe Analytics / CJA data feed exports.</div>
+
+    <div class="card">
+      <h2>Create a new feed</h2>
+      <form id="feedForm">
+        <label for="feedName">Feed name</label>
+        <input id="feedName" required placeholder="e.g. site-checkout-events" />
+
+        <label for="rsid">Report suite / Data view ID</label>
+        <input id="rsid" required placeholder="e.g. mycompanyprod" />
+
+        <label for="columnPreset">Column preset ID</label>
+        <input id="columnPreset" required placeholder="e.g. 1" />
+        <div class="hint">Column presets are configured separately in Adobe's UI first — this references an existing one.</div>
+
+        <div class="row">
+          <div>
+            <label for="startDate">Start date</label>
+            <input id="startDate" type="datetime-local" required />
+          </div>
+          <div>
+            <label for="endDate">End date (optional)</label>
+            <input id="endDate" type="datetime-local" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="interval">Frequency</label>
+            <select id="interval">
+              <option value="hourly">Hourly</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+          <div>
+            <label for="delay">Processing delay (hours)</label>
+            <select id="delay">
+              <option value="0">None</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="cloudLocationId">Cloud destination location</label>
+        <select id="cloudLocationId" required>
+          <option value="">Loading locations...</option>
+        </select>
+        <div class="hint">Pulled from your existing locations in Adobe (Components &gt; Exports &gt; Locations). Set one up there first if this list is empty.</div>
+
+        <label for="notifyEmails">Notify on completion (optional)</label>
+        <input id="notifyEmails" placeholder="you@company.com, teammate@company.com" />
+
+        <button type="submit" class="primary" id="submitBtn">Create feed</button>
+        <div class="status" id="createStatus"></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Existing feeds</h2>
+      <div id="feedList"><div class="empty-state">Loading...</div></div>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('feedForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const createStatus = document.getElementById('createStatus');
+    const feedList = document.getElementById('feedList');
+
+    loadFeeds();
+    loadLocations();
+
+    async function loadLocations() {
+      const select = document.getElementById('cloudLocationId');
+      try {
+        const res = await fetch('/api/locations');
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        const locations = data.content || data || [];
+
+        if (!Array.isArray(locations) || locations.length === 0) {
+          select.innerHTML = '<option value="">No locations found — set one up in Adobe\'s UI first</option>';
+          return;
+        }
+
+        select.innerHTML = '<option value="">Select a destination...</option>' + locations.map((loc) =>
+          `<option value="${loc.uuid}">${loc.name} (${loc.type})</option>`
+        ).join('');
+      } catch (err) {
+        select.innerHTML = '<option value="">Couldn\'t load locations</option>';
+        console.error(err);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      createStatus.className = 'status';
+      createStatus.textContent = '';
+
+      const toIso = (val) => (val ? new Date(val).toISOString() : null);
+
+      const payload = {
+        feedName: document.getElementById('feedName').value,
+        rsid: document.getElementById('rsid').value,
+        columnPreset: document.getElementById('columnPreset').value,
+        startDate: toIso(document.getElementById('startDate').value),
+        endDate: toIso(document.getElementById('endDate').value),
+        interval: document.getElementById('interval').value,
+        delay: parseInt(document.getElementById('delay').value, 10),
+        cloudLocationId: document.getElementById('cloudLocationId').value,
+        notifyEmails: document.getElementById('notifyEmails').value,
+      };
+
+      try {
+        const res = await fetch('/api/feeds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create feed');
+
+        createStatus.className = 'status success';
+        createStatus.textContent = `Feed "${payload.feedName}" created successfully.`;
+        form.reset();
+        loadFeeds();
+      } catch (err) {
+        createStatus.className = 'status error';
+        createStatus.textContent = err.message;
+        console.error(err);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function loadFeeds() {
+      try {
+        const res = await fetch('/api/feeds');
+        if (res.status === 401) { window.location.href = '/auth/login'; return; }
+
+        const data = await res.json();
+        const feeds = data.content || data || [];
+
+        if (!Array.isArray(feeds) || feeds.length === 0) {
+          feedList.innerHTML = '<div class="empty-state">No data feeds yet.</div>';
+          return;
+        }
+
+        feedList.innerHTML = `<ul class="feed-list">${feeds.map((f) => `
+          <li>
+            <span class="feed-name">${f.feedName || 'Unnamed'}</span>
+            <span class="feed-state">${(f.metadata && f.metadata.feedState) || 'unknown'}</span>
+          </li>
+        `).join('')}</ul>`;
+      } catch (err) {
+        feedList.innerHTML = '<div class="empty-state">Couldn\'t load feeds.</div>';
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
