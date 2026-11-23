@@ -20,11 +20,11 @@ CJA only produces trustworthy reports and exports when a chain of dependent piec
 
 **Goal:** help a person understand what is wrong, or could go wrong, in a CJA setup, using exact read-only checks and explanations cited from retrieved documentation. The system advises; a person decides and acts.
 
-**What it does:** audits a data view and its connection; validates a planned data feed column by column against Adobe's published rules; explains high and medium findings with citations; answers documentation questions and says plainly when the notes do not cover one; produces a downloadable report.
+**What it does:** audits a data view and its connection; validates a planned feed against Adobe's published rules; explains findings with citations; answers documentation questions, saying plainly when the notes do not cover one; produces a report.
 
 **Success criteria:** every seeded fault is reported and healthy data raises nothing above low; every statement about CJA behaviour cites a source; uncovered questions are refused, not guessed; nothing in Adobe changes without recorded approval; anything not checked is listed.
 
-**Out of scope:** automatic fixes, reading existing CJA feeds (no public API was found), other Adobe products, and production multi-tenant operation.
+**Out of scope:** automatic fixes, reading existing CJA feeds (no public API), other Adobe products, multi-tenant production use.
 
 ## 4. Final architecture and major components
 
@@ -65,8 +65,8 @@ I built the verifiable parts first; Tree of Thoughts and multi-agent will be ado
 Node.js 18+ and Express; Claude through the Anthropic SDK for explanations only; `@xenova/transformers` for local embeddings; a custom BM25 index; the CJA API with OAuth Server-to-Server credentials; Node's built-in test runner. About 3,300 lines of code and 1,000 lines of tests.
 
 - Hybrid score = semantic similarity + 0.5 × keyword score + a small boost for exact identifiers; the refusal threshold applies to semantic similarity only.
-- With no API key, Ask quotes the retrieved note sections verbatim with sources and Explain quotes the note retrieved for each finding, so nothing is generated. Both also offer the exact prompt for manual use.
-- A public demo runs on Render with `PUBLIC_DEMO=true`, which removes every credential and the API key at startup and forces sample data.
+- With no API key, Ask and Explain quote the retrieved notes verbatim with sources, so nothing is generated.
+- A public demo on Render (`PUBLIC_DEMO=true`) removes every credential and the API key at startup.
 - Developed with AI assistance (Claude), verified by tests and local runs.
 
 ## 7. Evaluation methods and results
@@ -87,7 +87,7 @@ Node.js 18+ and Express; Claude through the Anthropic SDK for explanations only;
 | Hybrid, initial weight 0.3 | 13/18 | 17/18 | 0.833 |
 | **Hybrid, chosen weight 0.5** | **14/18** | **18/18** | **0.866** |
 
-For "Which columns cannot be included in a CJA data feed?" the answering section moved from 18th to 4th, so it now reaches the model. I chose 0.5, the middle of a flat region (0.4–0.75), over the single highest value.
+For "Which columns cannot be included in a CJA data feed?" the answering section moved from 18th to 4th. I chose 0.5, the middle of a flat region (0.4–0.75), over the single highest value.
 
 **Refusal threshold:** on-topic and off-topic scores overlap (lowest correct section 0.245, highest off-topic question 0.38). At 0.30, 3 of 5 off-topic questions are refused and 1 of 18 on-topic questions would be wrongly refused.
 
@@ -99,7 +99,6 @@ For "Which columns cannot be included in a CJA data feed?" the answering section
 - **One guarded write:** creating a classic feed is off by default, needs explicit confirmation that the server re-checks, and is logged without credentials. A write-inventory test fails the build if a new write appears.
 - **Grounding:** the model sees only findings and excerpts, cannot add findings, and is not called when nothing relevant is retrieved. Environment text is treated as data, not instructions.
 - **Fallbacks:** missing index → full notes with a notice; no API key → quoted notes and a copy-ready prompt; missing Adobe field → check skipped and listed.
-- **Transparency:** a status strip shows data source, answer mode and safety switches; answers show their sources and scores.
 - **Human oversight:** the system advises and a person acts. Findings implying a production change, "not covered" answers and skipped checks need review. The operator can disable feed creation, force sample data or remove the key.
 
 ## 9. Limitations and future improvements
@@ -112,8 +111,14 @@ For "Which columns cannot be included in a CJA data feed?" the answering section
 
 **Repository:** [https://github.com/loveeshk/cja-audit-agent](https://github.com/loveeshk/cja-audit-agent). README (project, architecture, setup, usage), `examples/` (sample inputs, outputs, evaluation results) and `docs/` (detailed design write-ups).
 
-**Live demo:** [https://cja-audit-agent.onrender.com](https://cja-audit-agent.onrender.com) (read-only, sample data; the first visit may take about a minute while the free service wakes up).
+**Live demo:** [https://cja-audit-agent.onrender.com](https://cja-audit-agent.onrender.com) (read-only, sample data; the first visit can take a minute).
 
 **Acknowledgement:** thank you to Carnegie Mellon University for the Agentic AI program.
 
 **Run locally (no accounts or keys):** clone, then `npm install`, `npm test`, `npm start` (or double-click `start.bat`).
+
+## 11. Presentation video
+
+**Video link:** [https://youtu.be/ylwiIbckVbk](https://youtu.be/ylwiIbckVbk) (9:54, unlisted: anyone with the link can view it).
+
+**Summary:** This presentation introduces the CJA Audit Agent, a read-only, evidence-grounded assistant that helps analytics and data engineers audit Adobe Customer Journey Analytics setups and planned data feeds. It walks through the architecture and key design decisions (deterministic checks for every finding, hybrid retrieval for cited explanations, guardrails that keep the tool advisory) and shows a live demo. The evaluation shows all 77 tests and 13 injected-bug checks passing and retrieval improving from 15 to 18 of 18 questions, alongside the remaining limitations and next steps.

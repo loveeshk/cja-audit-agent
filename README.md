@@ -7,7 +7,7 @@ It combines deterministic checks (so findings are exact and repeatable), retriev
 explanations are cited), and a language model that may only explain what the checks found. It is advisory: a person
 decides and acts.
 
-**Try it:** [live demo](https://cja-audit-agent.onrender.com) (sample data, read-only) · [final report](docs/final-capstone-report.md) · [quick start](#quick-start-for-reviewers-no-accounts-or-keys-needed)
+**Try it:** [live demo](https://cja-audit-agent.onrender.com) (sample data, read-only) · [presentation video](https://youtu.be/ylwiIbckVbk) · [final report](docs/final-capstone-report.md) · [quick start](#quick-start-for-reviewers-no-accounts-or-keys-needed)
 
 ![Architecture](docs/architecture.png)
 
