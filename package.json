@@ -12,6 +12,7 @@
     "rag:prompts": "node scripts/prompts.js",
     "rag:table": "node scripts/trace-table.js",
     "rag:report": "node scripts/report-results.js",
+    "eval:mutations": "node scripts/mutation-check.js",
     "examples": "node scripts/make-examples.js"
   },
   "dependencies": {

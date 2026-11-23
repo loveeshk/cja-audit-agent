@@ -103,6 +103,7 @@ npm test                              # 77 offline tests
 npm run rag:eval                      # semantic vs keyword vs hybrid retrieval accuracy, weight sweep, threshold report
 npm run rag:table -- "your question"  # retrieval trace for one question as a paste-ready table (no key needed)
 npm run rag:report                    # rag:eval plus the two report traces, saved to examples/retrieval-results.md
+npm run eval:mutations                # inject 13 bugs one at a time and confirm the tests catch each (about a minute)
 npm run rag:compare                   # same question with no notes / full notes / retrieval (needs ANTHROPIC_API_KEY)
 npm run rag:prompts                   # the same three prompts without a key, to paste into a chat
 npm run examples                      # regenerate examples/ from the sample data
@@ -115,8 +116,8 @@ Inspect retrieval without calling the model: `GET /api/rag/trace?q=your question
 | What | Result |
 |---|---|
 | Automated tests | 77 tests: audit checks, feed rules, retrieval, keyword channel, no-key mode, credential guards, write guards, public demo lockdown |
-| Deliberate defects (11 guardrail and check bugs introduced on purpose) | Each was caught by a failing test |
-| Browser run on sample data (headless Chromium, stand-in server and stub model) | Audit, feed check, explain, report download, Ask and the feed-creation confirmation all work. Cancelling the confirmation sent 0 requests, accepting sent 1 |
+| Mutation check: 13 bugs injected one at a time into checks and guardrails (`npm run eval:mutations`) | 13/13 caught ([`examples/mutation-results.md`](examples/mutation-results.md)). The first run caught 10/13; the three gaps are now covered by tests |
+| Browser run on sample data (one-off, headless Chromium, stand-in server and stub model; not in the repository) | Audit, feed check, explain, report download, Ask and the feed-creation confirmation all work. Cancelling the confirmation sent 0 requests, accepting sent 1 |
 | Retrieval, semantic only, measured on the author's machine | One real miss (Q1) and one correct-but-fragile result (Q2): [`examples/retrieval-traces-semantic-baseline.md`](examples/retrieval-traces-semantic-baseline.md) |
 | Retrieval, keyword channel alone on 18 questions (deterministic, offline) | Correct section in the top 4 for 18/18, first for 13/18, MRR 0.843 |
 | Retrieval with the real model, 18 questions ([`examples/retrieval-results.md`](examples/retrieval-results.md)) | Correct section in the top 4: semantic only 15/18, hybrid 18/18 (MRR 0.684 → 0.866, keyword weight 0.5 chosen from a sweep) |

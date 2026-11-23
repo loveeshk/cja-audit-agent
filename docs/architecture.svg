@@ -42,7 +42,7 @@
 <text x="500" y="452" text-anchor="middle" font-size="12" fill="#5F5E5A">Findings come from code only. The model sees findings and retrieved excerpts, not raw API responses, and cannot add findings.</text>
 
 <rect x="40" y="470" width="920" height="62" rx="8" fill="#FAEEDA" stroke="#854F0B"/>
-<text x="500" y="493" text-anchor="middle" font-size="14" font-weight="bold" fill="#412402">Safety and observability (built, 74 automated tests)</text>
+<text x="500" y="493" text-anchor="middle" font-size="14" font-weight="bold" fill="#412402">Safety and observability (built, 77 automated tests)</text>
 <text x="500" y="516" text-anchor="middle" font-size="12" fill="#412402">feed-creation gate (off by default, confirmation, audit log) · write-inventory test · skipped checks listed · fallbacks · traces</text>
 
 <rect x="40" y="552" width="920" height="116" rx="10" fill="none" stroke="#888780" stroke-width="1.5" stroke-dasharray="6 5"/>
